@@ -1,0 +1,6 @@
+var Ninpp = function(){
+	this.initiatlize();
+};
+Ninpp.prototype = {
+	
+};
