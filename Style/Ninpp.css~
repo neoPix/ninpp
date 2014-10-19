@@ -30,11 +30,22 @@ body header.slide address{
 	background: rgba(50,50,50,0.8);
 	font-size: 3vw;
 }
+body .slide a{
+	color : #FFF;
+}
+body .slide a:hover{
+	text-shadow: 0 0 2vh #0063a6;
+}
+body .slide img{
+	display: block;
+	margin: 0 auto;
+	max-height: 40%;
+}
 body .slide h1{
 	font-size: 12vw;
 }
 body .slide h2{
-	font-size: 10vw;
+	font-size: 8vw;
 	margin: 5vh 1vw;
 }
 body .slide p, body .slide ul li{
@@ -76,5 +87,47 @@ body span.pagging{
 	font-weight: bold;
 	font-size: 3vh;
 	padding: 0.5vh 0.5vw;
-	border-radius: 50%;
+	border-radius: 3px;
+}
+
+/*Animations*/
+
+body .delayed{
+visibility:hidden;
+opacity:0;
+/*transition*/
+-webkit-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
+   -moz-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
+     -o-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
+        transition:visibility 0s linear 0.5s,opacity 0.5s linear;
+}
+body .delayed.rotateIn{
+/*transform*/
+-webkit-transform:rotate(360deg);
+   -moz-transform:rotate(360deg);
+    -ms-transform:rotate(360deg);
+     -o-transform:rotate(360deg);
+        transform:rotate(360deg);
+/*transition*/
+-webkit-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
+   -moz-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
+     -o-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
+        transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
+}
+body .delayed.on{
+visibility:visible;
+opacity:1;
+/*transition-delay*/
+-webkit-transition-delay:0s;
+   -moz-transition-delay:0s;
+     -o-transition-delay:0s;
+        transition-delay:0s;
+}
+body .delayed.rotateIn.on{
+/*transform*/
+-webkit-transform:rotate(0);
+   -moz-transform:rotate(0);
+    -ms-transform:rotate(0);
+     -o-transform:rotate(0);
+        transform:rotate(0);
 }

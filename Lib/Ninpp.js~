@@ -5,11 +5,12 @@ Ninpp.prototype = {
 	/// Initialisation de la présentation
 	initialize: function(){
 		this.body = document.getElementsByTagName('body')[0];
-		this.history = [{when : new Date(), what: 'START', url: document.location}];
+		this.history = [{when : +new Date(), what: 'START', url: document.location}];
 		this.slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
 		this.progress = Array.prototype.slice.call(document.querySelectorAll("progress"));
 		this.pageDisplay = Array.prototype.slice.call(document.querySelectorAll(".pagging"));
-		this.curent = -1;		
+		this.curent = -1;
+		this.inSlideCurrent = -1;		
 
 		this._bindEvents();
 		this._prepareSlides();
@@ -18,13 +19,33 @@ Ninpp.prototype = {
 	},
 	/// Aller à la slide suivante
 	setNextSlide: function(){
-		this.setSlide(this.curent + 1);
-		this.history.push({when : new Date(), what: 'GOBACK'});
+		this.inSlideCurrent++;
+		if(this.inSlideCurrent >= this.inSlideDelayed.length){
+			this.setSlide(this.curent + 1);
+			this.inSlideDelayed.forEach(function(delayed){
+				delayed.classList.remove('on');
+			});
+			this.inSlideCurrent = -1;
+		}
+		else{
+			this.inSlideDelayed[this.inSlideCurrent].classList.add('on');
+		}
+		this.history.push({when : +new Date(), what: 'GOFORTH'});
 	},
 	/// Revenir à la slide précédente
 	setPreviousSlide: function(){
-		this.setSlide(this.curent - 1);
-		this.history.push({when : new Date(), what: 'GO'});
+		this.inSlideCurrent--;
+		if(this.inSlideCurrent < 0){
+			this.setSlide(this.curent - 1);
+			this.inSlideDelayed.forEach(function(delayed){
+				delayed.classList.add('on');
+			});
+			this.inSlideCurrent = this.inSlideDelayed.length;
+		}
+		else{
+			this.inSlideDelayed[this.inSlideCurrent].classList.remove('on');
+		}
+		this.history.push({when : +new Date(), what: 'GOBACK'});
 	},
 	/// Afficher la slide ayant le numéro passé en paramètre
 	setSlide: function(slideNumber){
@@ -33,6 +54,8 @@ Ninpp.prototype = {
 				slide.style.display = 'none';
 			});
 			this.slides[slideNumber].style.display='block';
+			this._setTitle(this.slides[slideNumber]);
+			this.inSlideDelayed = Array.prototype.slice.call(this.slides[slideNumber].getElementsByClassName('delayed'));
 			this.curent = slideNumber;
 			window.location.hash = '#'+this.slides[slideNumber].getAttribute('id');
 		}
@@ -65,6 +88,18 @@ Ninpp.prototype = {
 			if(!slide.getAttribute('id'))
 				slide.setAttribute('id', 'slide'+(i+1));
 		});
+	},
+	/// Définition du titre de la page en fonction de la slide
+	_setTitle: function(slide){
+		if(slide.getAttribute('data-title')){
+			document.title = slide.getAttribute('data-title');	
+		}
+		else if(slide.getElementsByTagName('h1').length > 0){
+			document.title = slide.getElementsByTagName('h1')[0].innerHTML;
+		}
+		else if(slide.getElementsByTagName('h2').length > 0){
+			document.title = slide.getElementsByTagName('h2')[0].innerHTML;
+		}
 	},
 	/// Mise à jour des informations de progressions
 	/// Bare de progression de type overal s'il y en a
