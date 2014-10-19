@@ -41,6 +41,8 @@
 			<li>Progression dans la présentation.</li>
 			<li>Affichage du temps de la présentation.</li>
 			<li>Modification du titre de la page.</li>
+			<li>Enregistrement audio / vidéo.</li>
+			<li>Gestion de l'historique.</li>
 		</ul>
 	</section>
 	<section class="slide" id="whatitwilldo">
@@ -48,15 +50,13 @@
 		<ul>
 			<li class="delayed">Gestion des evenements touch.</li>
 			<li class="delayed rotateIn">Gestion des annimations.</li>
-			<li class="delayed">Gestion de l'historique.</li>
-			<li class="delayed">Enregistrement audio / vidéo.</li>
-			<li class="delayed">Replay à la demande de la présentation.</li>
+			<li class="delayed">Edition WYSIWYG (<abbr title="A Upgraded Real Editor That Kill It">AURETKI</abbr>).</li>
+			<li class="delayed">Replay à la demande (<abbr title="An Upgraded Replay That Kill Other Applications">AURTKOA</abbr>).</li>
 		</ul>
 	</section>
 	<section class="slide" id="whatitdoesnot" data-title="Ce que ca ne fait pas">
 		<h2>Ce que ca ne fait/fera pas</h2>
 		<ul>
-			<li>Edition WYSIWYG.</li>
 			<li>Gestion avancée des annimations.</li>
 			<li>Supporter les vieux navigateurs.</li>
 		</ul>
@@ -76,7 +76,6 @@
 		<h2>Défault</h2>
 		<ul>
 			<li>Pas terminé.</li>
-			<li>Connaissance HTML requise.</li>
 			<li>Pas d'import / export.</li>
 		</ul>
 	</section>
@@ -97,7 +96,7 @@
 	<progress id="progressTime" data-type="time" value="50"></progress>
 	<span class="pagging" data-format="simple">0</span>
 	<span class="recorder"></span>
-	<script src="Lib/MediaStreamRecorder.js"> </script>
+	<script src="Lib/WebRTC.js"> </script>
 	<script src="Lib/jszip.js"> </script>
 	<script src="Lib/ninpp.js"></script>
 </body>

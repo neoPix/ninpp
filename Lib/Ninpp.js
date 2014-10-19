@@ -158,6 +158,7 @@ Ninpp.prototype = {
 				break;
 		}
 	},
+	/// Gestion des enregistrements Audio et Vidéo
 	_startStopRecording: function(button){
 		$this = this;
 		if(button.classList.contains('recording')){
@@ -167,18 +168,24 @@ Ninpp.prototype = {
 		else{
 			if(!this.ninppRecorder){
 				this.ninppRecorder = new NinppRecorder();
-				this.ninppRecorder.manageBlob = function(blob){
+				this.ninppRecorder.manageBlob = function(blobVideo, blobAudio){
 					var zip = new JSZip();
 					zip.file("History.json", JSON.stringify($this.history));
 					var arrayBuffer;
-					var fileReader = new FileReader();
-					fileReader.onload = function() {
+					var videoFileReader = new FileReader();
+					videoFileReader.onload = function() {
 						arrayBuffer = this.result;
 						zip.file("Record.webm", arrayBuffer);
-						var content = zip.generate({type:"blob"});
-						saveAs(content, "presentation.zip");
+						var audioFileReader = new FileReader();
+						audioFileReader.onload = function() {
+							arrayBuffer = this.result;
+							zip.file("Record.ogg", arrayBuffer);
+							var content = zip.generate({type:"blob"});
+							saveAs(content, "presentation.zip");
+						};
+						audioFileReader.readAsArrayBuffer(blobAudio);
 					};
-					fileReader.readAsArrayBuffer(blob);
+					videoFileReader.readAsArrayBuffer(blobVideo);
 				};
 			}
 			this.ninppRecorder.start();
@@ -200,32 +207,43 @@ Ninpp.prototype = {
 };
 
 var NinppRecorder = function(){};
-
 NinppRecorder.prototype = {
+	/// Préparation et démarage de l'enregistrement Video et Audio
 	start: function(){
 		var $this = this;
 		navigator.getUserMedia  = navigator.getUserMedia || 
                          navigator.webkitGetUserMedia ||
                           navigator.mozGetUserMedia || 
                            navigator.msGetUserMedia;
-		navigator.getUserMedia({audio: true, video: true}, function(stream) {
-			$this.webcamstream = stream;
-			$this.startRecording();
+		navigator.getUserMedia({audio: false, video: true}, function(streamvideo) {
+			$this.videoStream = streamvideo;
+			navigator.getUserMedia({audio: true, video: false}, function(streamaudio) {
+				$this.audioStream = streamaudio;
+				$this.startRecording();
+			}, function(e){console.log(e);});
 		}, function(e){console.log(e);});
 	},
+	/// Démarage de l'enregistrement Video et Audio
 	startRecording: function(){
 		var $this=this;
-		this.streamRecorder = new MediaStreamRecorder(this.webcamstream);
-		this.streamRecorder.mimeType = 'video/webm';
-		this.streamRecorder.ondataavailable = function (blob) {$this.manageBlob(blob);};
-		this.streamRecorder.start(120000000); // buffer de deux heures, quelque chose à faire ici
+		this.videoStreamRecorder = RecordRTC(this.videoStream);
+		this.audioStreamRecorder = RecordRTC(this.audioStream);
+		this.videoStreamRecorder.startRecording();
+		this.audioStreamRecorder.startRecording();
 	},
+	/// Démarage de l'enregistrement Video et Audio
 	stopRecording: function(){
 		var $this = this;
-		this.streamRecorder.stop();
+		this.videoStreamRecorder.stopRecording(function () {
+			$this.audioStreamRecorder.stopRecording(function () {
+				$this.manageBlob($this.videoStreamRecorder.getBlob(), $this.audioStreamRecorder.getBlob());
+			});
+			
+	    	});
 	},
-	manageBlob: function(blob){
-		saveAs(blob, "presentation.webm");
+	/// Callback de fin d'enregistrement
+	manageBlob: function(blobVideo, blobAudio){
+		debug('The manageBlob method must be overriden');
 	}
 };
 
