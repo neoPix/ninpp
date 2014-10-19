@@ -89,26 +89,36 @@ body span.pagging{
 	padding: 0.5vh 0.5vw;
 	border-radius: 3px;
 }
+body .recorder{
+	display: block;
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	width: 10px;
+	height: 10px;
+	background-color: #515151;
+	border-radius: 50%;
+}
+body .recorder.recording{
+	background-color: #F00;
+}
 
 /*Animations*/
 
 body .delayed{
 visibility:hidden;
 opacity:0;
-/*transition*/
 -webkit-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
    -moz-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
      -o-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
         transition:visibility 0s linear 0.5s,opacity 0.5s linear;
 }
 body .delayed.rotateIn{
-/*transform*/
 -webkit-transform:rotate(360deg);
    -moz-transform:rotate(360deg);
     -ms-transform:rotate(360deg);
      -o-transform:rotate(360deg);
         transform:rotate(360deg);
-/*transition*/
 -webkit-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
    -moz-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
      -o-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
@@ -117,14 +127,12 @@ body .delayed.rotateIn{
 body .delayed.on{
 visibility:visible;
 opacity:1;
-/*transition-delay*/
 -webkit-transition-delay:0s;
    -moz-transition-delay:0s;
      -o-transition-delay:0s;
         transition-delay:0s;
 }
 body .delayed.rotateIn.on{
-/*transform*/
 -webkit-transform:rotate(0);
    -moz-transform:rotate(0);
     -ms-transform:rotate(0);

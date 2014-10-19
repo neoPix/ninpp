@@ -15,7 +15,7 @@ Ninpp.prototype = {
 		this._bindEvents();
 		this._prepareSlides();
 		if(window.location.hash)this.setSlideById(window.location.hash.replace('#', ''));
-		else this.setNextSlide();
+		else this.setSlide(0);
 	},
 	/// Aller à la slide suivante
 	setNextSlide: function(){
@@ -34,7 +34,6 @@ Ninpp.prototype = {
 	},
 	/// Revenir à la slide précédente
 	setPreviousSlide: function(){
-		this.inSlideCurrent--;
 		if(this.inSlideCurrent < 0){
 			this.setSlide(this.curent - 1);
 			this.inSlideDelayed.forEach(function(delayed){
@@ -46,6 +45,7 @@ Ninpp.prototype = {
 			this.inSlideDelayed[this.inSlideCurrent].classList.remove('on');
 		}
 		this.history.push({when : +new Date(), what: 'GOBACK'});
+		this.inSlideCurrent--;
 	},
 	/// Afficher la slide ayant le numéro passé en paramètre
 	setSlide: function(slideNumber){
@@ -135,6 +135,7 @@ Ninpp.prototype = {
 					progress.value = time / duration;			
 				});
 			}, 1000);
+		document.querySelector('.recorder').addEventListener('click', function(){$this._startStopRecording(this);});
 	},
 	/// Gestion de l'event keyDown
 	_manageKeyPress: function(event){
@@ -157,6 +158,33 @@ Ninpp.prototype = {
 				break;
 		}
 	},
+	_startStopRecording: function(button){
+		$this = this;
+		if(button.classList.contains('recording')){
+			button.classList.remove('recording');
+			this.ninppRecorder.stopRecording();
+		}
+		else{
+			if(!this.ninppRecorder){
+				this.ninppRecorder = new NinppRecorder();
+				this.ninppRecorder.manageBlob = function(blob){
+					var zip = new JSZip();
+					zip.file("History.json", JSON.stringify($this.history));
+					var arrayBuffer;
+					var fileReader = new FileReader();
+					fileReader.onload = function() {
+						arrayBuffer = this.result;
+					};
+					fileReader.readAsArrayBuffer(blob);
+					zip.file("Record.webm", arrayBuffer);
+					var content = zip.generate({type:"blob"});
+					saveAs(content, "presentation.zip");
+				};
+			}
+			this.ninppRecorder.start();
+			button.classList.add('recording');
+		}
+	},
 	/// Mettre à jour la hauteur des slides
 	_setSlideHeight: function(){
 		var height = window.innerHeight;
@@ -170,5 +198,43 @@ Ninpp.prototype = {
 		});
 	},
 };
+
+var NinppRecorder = function(){};
+
+NinppRecorder.prototype = {
+	start: function(){
+		var $this = this;
+		navigator.getUserMedia  = navigator.getUserMedia || 
+                         navigator.webkitGetUserMedia ||
+                          navigator.mozGetUserMedia || 
+                           navigator.msGetUserMedia;
+		navigator.getUserMedia({audio: true, video: true}, function(stream) {
+			$this.webcamstream = stream;
+			$this.startRecording();
+		}, function(e){console.log(e);});
+	},
+	startRecording: function(){
+		var $this=this;
+		this.streamRecorder = new MediaStreamRecorder(this.webcamstream);
+		this.streamRecorder.mimeType = 'video/webm';
+		this.streamRecorder.ondataavailable = function (blob) {$this.manageBlob(blob);};
+		this.streamRecorder.start(120000000); // buffer de deux heures, quelque chose à faire ici
+	},
+	stopRecording: function(){
+		var $this = this;
+		this.streamRecorder.stop();
+	},
+	manageBlob: function(blob){
+		saveAs(blob, "presentation.webm");
+	}
+};
+
+/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
+var saveAs=saveAs||"undefined"!==typeof navigator&&navigator.msSaveOrOpenBlob&&navigator.msSaveOrOpenBlob.bind(navigator)||function(a){"use strict";if("undefined"===typeof navigator||!/MSIE [1-9]\./.test(navigator.userAgent)){var k=a.document,n=k.createElementNS("http://www.w3.org/1999/xhtml","a"),w="download"in n,x=function(c){var e=k.createEvent("MouseEvents");e.initMouseEvent("click",!0,!1,a,0,0,0,0,0,!1,!1,!1,!1,0,null);c.dispatchEvent(e)},q=a.webkitRequestFileSystem,u=a.requestFileSystem||q||a.mozRequestFileSystem,
+y=function(c){(a.setImmediate||a.setTimeout)(function(){throw c;},0)},r=0,s=function(c){var e=function(){"string"===typeof c?(a.URL||a.webkitURL||a).revokeObjectURL(c):c.remove()};a.chrome?e():setTimeout(e,10)},t=function(c,a,d){a=[].concat(a);for(var b=a.length;b--;){var l=c["on"+a[b]];if("function"===typeof l)try{l.call(c,d||c)}catch(f){y(f)}}},m=function(c,e){var d=this,b=c.type,l=!1,f,p,k=function(){t(d,["writestart","progress","write","writeend"])},g=function(){if(l||!f)f=(a.URL||a.webkitURL||
+a).createObjectURL(c);p?p.location.href=f:void 0==a.open(f,"_blank")&&"undefined"!==typeof safari&&(a.location.href=f);d.readyState=d.DONE;k();s(f)},h=function(a){return function(){if(d.readyState!==d.DONE)return a.apply(this,arguments)}},m={create:!0,exclusive:!1},v;d.readyState=d.INIT;e||(e="download");if(w)f=(a.URL||a.webkitURL||a).createObjectURL(c),n.href=f,n.download=e,x(n),d.readyState=d.DONE,k(),s(f);else{a.chrome&&b&&"application/octet-stream"!==b&&(v=c.slice||c.webkitSlice,c=v.call(c,0,
+c.size,"application/octet-stream"),l=!0);q&&"download"!==e&&(e+=".download");if("application/octet-stream"===b||q)p=a;u?(r+=c.size,u(a.TEMPORARY,r,h(function(a){a.root.getDirectory("saved",m,h(function(a){var b=function(){a.getFile(e,m,h(function(a){a.createWriter(h(function(b){b.onwriteend=function(b){p.location.href=a.toURL();d.readyState=d.DONE;t(d,"writeend",b);s(a)};b.onerror=function(){var a=b.error;a.code!==a.ABORT_ERR&&g()};["writestart","progress","write","abort"].forEach(function(a){b["on"+
+a]=d["on"+a]});b.write(c);d.abort=function(){b.abort();d.readyState=d.DONE};d.readyState=d.WRITING}),g)}),g)};a.getFile(e,{create:!1},h(function(a){a.remove();b()}),h(function(a){a.code===a.NOT_FOUND_ERR?b():g()}))}),g)}),g)):g()}},b=m.prototype;b.abort=function(){this.readyState=this.DONE;t(this,"abort")};b.readyState=b.INIT=0;b.WRITING=1;b.DONE=2;b.error=b.onwritestart=b.onprogress=b.onwrite=b.onabort=b.onerror=b.onwriteend=null;return function(a,b){return new m(a,b)}}}("undefined"!==typeof self&&
+self||"undefined"!==typeof window&&window||this.content);"undefined"!==typeof module&&null!==module?module.exports=saveAs:"undefined"!==typeof define&&null!==define&&null!=define.amd&&define([],function(){return saveAs});
 
 var ninpp = new Ninpp();

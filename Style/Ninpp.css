@@ -89,6 +89,20 @@ body span.pagging{
 	padding: 0.5vh 0.5vw;
 	border-radius: 3px;
 }
+body .recorder{
+	display: block;
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	width: 10px;
+	height: 10px;
+	background-color: #515151;
+	border-radius: 50%;
+	cursor: pointer;
+}
+body .recorder.recording{
+	background-color: #F00;
+}
 
 /*Animations*/
 
