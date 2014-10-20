@@ -8,10 +8,11 @@ body{
 body .slide{
 	background: rgba(50,50,50,0.8);
 	margin: 1%;
-	padding: 1em;
+	padding: 18px;
 	color: #fff;
 	position: relative;
 	overflow: hidden;
+	font-size: 18px;
 }
 body header.slide h1{
 	margin: 9vh 1vw;
@@ -20,7 +21,7 @@ body header.slide h1, body header.slide h2, body header.slide address{
 	text-align: center;
 }
 body header.slide h2{
-	font-size: 6vw;
+	font-size: 6em;
 }
 body header.slide address{
 	position: absolute;
@@ -42,14 +43,20 @@ body .slide img{
 	max-height: 40%;
 }
 body .slide h1{
-	font-size: 12vw;
+	font-size: 12em;
 }
 body .slide h2{
-	font-size: 8vw;
+	font-size: 9em;
 	margin: 5vh 1vw;
 }
 body .slide p, body .slide ul li{
-	font-size: 5vw;
+	font-size: 4em;
+}
+body .slide ul li ul li{
+	font-size: 0.75em;
+}
+body .slide ul li ul{
+	margin: 1vh 1vh 1vh 8vh;
 }
 body .slide ul{
 	margin: 5vh;
@@ -58,6 +65,11 @@ body .slide ul li:before{
 	content: '✓';
 	margin: 0 5vw 0 0;
 	color: #0f0;	
+}
+body .slide ul li ul li:before{
+	content: '➜';
+	margin: 0 2vw 0 0;
+	color: #28bdbd;	
 }
 body progress[data-type="overal"]{
 	position: absolute;

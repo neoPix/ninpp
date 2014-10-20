@@ -5,7 +5,7 @@ Ninpp.prototype = {
 	/// Initialisation de la présentation
 	initialize: function(){
 		this.body = document.getElementsByTagName('body')[0];
-		this.history = [{when : +new Date(), what: 'START', url: document.location}];
+		this.history = [{when : +new Date(), what: 'START', page: window.location.hash.replace('#', '')}];
 		this.slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
 		this.progress = Array.prototype.slice.call(document.querySelectorAll("progress"));
 		this.pageDisplay = Array.prototype.slice.call(document.querySelectorAll(".pagging"));
@@ -21,30 +21,39 @@ Ninpp.prototype = {
 	setNextSlide: function(){
 		this.inSlideCurrent++;
 		if(this.inSlideCurrent >= this.inSlideDelayed.length){
-			this.setSlide(this.curent + 1);
-			this.inSlideDelayed.forEach(function(delayed){
-				delayed.classList.remove('on');
-			});
-			this.inSlideCurrent = -1;
+			if(this.setSlide(this.curent + 1)){
+				this.history.push({when : +new Date(), what: 'GOTONEXTSLIDE', page: window.location.hash.replace('#', '')});
+				this.inSlideDelayed.forEach(function(delayed){
+					delayed.classList.remove('on');
+				});
+				this.inSlideCurrent = -1;
+			}
+			else
+				this.inSlideCurrent--;
 		}
 		else{
 			this.inSlideDelayed[this.inSlideCurrent].classList.add('on');
+			this.history.push({when : +new Date(), what: 'GOTONEXTANIMATION', page: window.location.hash.replace('#', '')});
 		}
-		this.history.push({when : +new Date(), what: 'GOFORTH'});
+		
 	},
 	/// Revenir à la slide précédente
 	setPreviousSlide: function(){
 		if(this.inSlideCurrent < 0){
-			this.setSlide(this.curent - 1);
-			this.inSlideDelayed.forEach(function(delayed){
-				delayed.classList.add('on');
-			});
-			this.inSlideCurrent = this.inSlideDelayed.length;
+			if(this.setSlide(this.curent - 1)){
+				this.history.push({when : +new Date(), what: 'GOTOPREVIOUSSLIDE', page: window.location.hash.replace('#', '')});
+				this.inSlideDelayed.forEach(function(delayed){
+					delayed.classList.add('on');
+				});
+				this.inSlideCurrent = this.inSlideDelayed.length;
+			}
+			else
+				this.inSlideCurrent++;
 		}
 		else{
 			this.inSlideDelayed[this.inSlideCurrent].classList.remove('on');
+			this.history.push({when : +new Date(), what: 'GOTOPREVIOUSANIMATION', page: window.location.hash.replace('#', '')});
 		}
-		this.history.push({when : +new Date(), what: 'GOBACK'});
 		this.inSlideCurrent--;
 	},
 	/// Afficher la slide ayant le numéro passé en paramètre
@@ -58,9 +67,11 @@ Ninpp.prototype = {
 			this.inSlideDelayed = Array.prototype.slice.call(this.slides[slideNumber].getElementsByClassName('delayed'));
 			this.curent = slideNumber;
 			window.location.hash = '#'+this.slides[slideNumber].getAttribute('id');
+			this._setSlideHeight();
+			this._updateProgress();
+			return true;
 		}
-		this._setSlideHeight();
-		this._updateProgress();
+		return false;
 	},
 	/// Afficher la slide ayant l'identifiant passé en paramètre
 	setSlideById: function(id){
@@ -166,11 +177,38 @@ Ninpp.prototype = {
 			this.ninppRecorder.stopRecording();
 		}
 		else{
+			this.history = [{when : +new Date(), what: 'START', page: window.location.hash.replace('#', '')}];
 			if(!this.ninppRecorder){
 				this.ninppRecorder = new NinppRecorder();
-				this.ninppRecorder.manageBlob = function(blobVideo, blobAudio){
+				this.recordFail = function(){
+					button.classList.remove('recording');
+				};
+				this.ninppRecorder.manageBlob = function(blobAudio, blobVideo){
 					var zip = new JSZip();
 					zip.file("History.json", JSON.stringify($this.history));
+
+					var arrayBuffer, audioFileReader = new FileReader();
+					audioFileReader.onload = function() {
+						arrayBuffer = this.result;
+						zip.file("Record.ogg", arrayBuffer);
+						if(blobVideo){
+							var videoFileReader = new FileReader();
+							videoFileReader.onload = function() {
+								arrayBuffer = this.result;
+								zip.file("Record.webm", arrayBuffer);
+								var content = zip.generate({type:"blob"});
+								saveAs(content, "presentation.zip");
+							};
+							videoFileReader.readAsArrayBuffer(blobVideo);
+						}
+						else{
+							var content = zip.generate({type:"blob"});
+							saveAs(content, "presentation.zip");
+						}
+					};
+					audioFileReader.readAsArrayBuffer(blobAudio);
+
+
 					var arrayBuffer;
 					var videoFileReader = new FileReader();
 					videoFileReader.onload = function() {
@@ -196,55 +234,77 @@ Ninpp.prototype = {
 	_setSlideHeight: function(){
 		var height = window.innerHeight;
 		this.slides.forEach(function(slide, i){
+			slide.style.height = 'auto';
+			slide.style.fontSize = 'inherit';
 			var style = slide.currentStyle || window.getComputedStyle(slide);
 			var marginTop = parseFloat(style.marginTop.replace('px', '')),
 			    marginBottom = parseFloat(style.marginBottom.replace('px', ''))
 			    paddingTop = parseFloat(style.paddingTop.replace('px', '')),
 			    paddingBottom = parseFloat(style.paddingBottom.replace('px', ''));
-			slide.style.height = (height - (marginBottom + marginTop + paddingTop + paddingBottom)) + 'px';
+	
+			var slideHeight = (height - (marginBottom + marginTop + paddingTop + paddingBottom)), defaultFontSize = parseFloat(style.fontSize.replace('px', '')), fontSize = (defaultFontSize * (slideHeight / parseFloat(style.height.replace('px', ''))));
+			slide.style.fontSize =  Math.min(fontSize, defaultFontSize) + 'px';
+			slide.style.height = slideHeight + 'px';
 		});
 	},
 };
 
-var NinppRecorder = function(){};
+var NinppRecorder = function(){
+	navigator.getUserMedia  = navigator.getUserMedia || 
+                         navigator.webkitGetUserMedia ||
+                          navigator.mozGetUserMedia || 
+                           navigator.msGetUserMedia;
+};
 NinppRecorder.prototype = {
 	/// Préparation et démarage de l'enregistrement Video et Audio
 	start: function(){
 		var $this = this;
-		navigator.getUserMedia  = navigator.getUserMedia || 
-                         navigator.webkitGetUserMedia ||
-                          navigator.mozGetUserMedia || 
-                           navigator.msGetUserMedia;
-		navigator.getUserMedia({audio: false, video: true}, function(streamvideo) {
-			$this.videoStream = streamvideo;
-			navigator.getUserMedia({audio: true, video: false}, function(streamaudio) {
-				$this.audioStream = streamaudio;
+		this.stream = {};
+		navigator.getUserMedia({audio: true, video: false}, function(streamaudio) {
+			$this.stream.audioStream = streamaudio;
+			navigator.getUserMedia({audio: false, video: true}, function(streamvideo) {
+				$this.stream.videoStream = streamvideo;
 				$this.startRecording();
-			}, function(e){console.log(e);});
-		}, function(e){console.log(e);});
+			}, function(e){
+				console.log('No video device');
+				$this.startRecording();
+			});
+		}, function(e){
+			console.error('No audio device');
+			$this.recordFail(e);
+		});
 	},
 	/// Démarage de l'enregistrement Video et Audio
 	startRecording: function(){
 		var $this=this;
-		this.videoStreamRecorder = RecordRTC(this.videoStream);
-		this.audioStreamRecorder = RecordRTC(this.audioStream);
-		this.videoStreamRecorder.startRecording();
-		this.audioStreamRecorder.startRecording();
+		this.recorder = {};
+		if(typeof this.stream.audioStream != 'undefined') this.recorder.audioStreamRecorder = RecordRTC(this.stream.audioStream);
+		if(typeof this.stream.videoStream != 'undefined') this.recorder.videoStreamRecorder = RecordRTC(this.stream.videoStream);
+		
+		if(typeof this.recorder.audioStreamRecorder != 'undefined') this.recorder.audioStreamRecorder.startRecording();
+		if(typeof this.recorder.videoStreamRecorder != 'undefined') this.recorder.videoStreamRecorder.startRecording();
 	},
 	/// Démarage de l'enregistrement Video et Audio
 	stopRecording: function(){
 		var $this = this;
-		this.videoStreamRecorder.stopRecording(function () {
-			$this.audioStreamRecorder.stopRecording(function () {
-				$this.manageBlob($this.videoStreamRecorder.getBlob(), $this.audioStreamRecorder.getBlob());
-			});
+		if(typeof this.recorder.audioStreamRecorder != 'undefined' && typeof this.recorder.videoStreamRecorder != 'undefined'){
+			this.recorder.videoStreamRecorder.stopRecording(function () {
+				$this.recorder.audioStreamRecorder.stopRecording(function () {
+					$this.manageBlob($this.recorder.audioStreamRecorder.getBlob(), $this.recorder.videoStreamRecorder.getBlob());
+				});
 			
-	    	});
+		    	});
+		}
+		else if(typeof this.recorder.audioStreamRecorder != 'undefined'){
+			$this.recorder.audioStreamRecorder.stopRecording(function () {
+				$this.manageBlob($this.recorder.audioStreamRecorder.getBlob(), null);
+			});
+		}
 	},
 	/// Callback de fin d'enregistrement
-	manageBlob: function(blobVideo, blobAudio){
-		debug('The manageBlob method must be overriden');
-	}
+	manageBlob: function(blobAudio, blobVideo){},
+	/// callback en cas d'echec d'enregistrement
+	recordFail: function(e){}
 };
 
 /*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
