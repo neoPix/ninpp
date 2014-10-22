@@ -4,6 +4,10 @@ body{
 	background: #000 url(../Img/background.jpg) no-repeat;
 	background-size: cover;
 	font-family: Arial;
+-webkit-transition:background 0s linear 0.5s;
+   -moz-transition:background 0s linear 0.5s;
+     -o-transition:background 0s linear 0.5s;
+        transition:background 0s linear 0.5s;
 }
 body .slide{
 	background: rgba(50,50,50,0.8);

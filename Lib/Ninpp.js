@@ -180,7 +180,7 @@ Ninpp.prototype = {
 			this.history = [{when : +new Date(), what: 'START', page: window.location.hash.replace('#', '')}];
 			if(!this.ninppRecorder){
 				this.ninppRecorder = new NinppRecorder();
-				this.recordFail = function(){
+				this.ninppRecorder.recordFail = function(){
 					button.classList.remove('recording');
 				};
 				this.ninppRecorder.manageBlob = function(blobAudio, blobVideo){
