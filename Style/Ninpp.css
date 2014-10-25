@@ -1,158 +1,179 @@
-body{
+ninpp-player ninpp-player-controls{
+	display: block;
+	position: absolute;
+	top: 50%;
+	margin: -64px -35px 0 0;
+	right: 0;
+	width: 40px;
+	height: 128px;
+	background: rgba(128,128,128,0.4);
+	transition:margin-right .5s ease-in-out, background-color .5s ease-in-out;
+	border-radius: 5px 0 0 5px;
+}
+ninpp-player ninpp-player-controls:hover, ninpp-player [is="ninpp-player-controls"]:hover{
+	margin-right: 0;
+	background: rgba(128,128,128,0.9);
+}
+ninpp-player ninpp-player-controls .option{
+	display: block;
+	width: 35px;
+	padding: 5px;
+	font-size: 32px;
+	text-align: center;
+	color: #fff;
+	opacity: 0.5;
+	cursor: pointer;
+}
+ninpp-player ninpp-player-controls .option:hover{
+	opacity: 1;
+}
+ninpp-player ninpp-player-controls .option.fullScreen{
+	transform: rotate(45deg);
+}
+ninpp-player ninpp-player-controls .option.record:hover, ninpp-player ninpp-player-controls .option.record.on{
+	color: red;
+}
+/* Viewer */
+ninpp-viewer{
 	margin: 0;
-	padding: 0;
+	padding: 0.01px; /* Hack moche mais fonctionnel, trouver une solution */
 	background: #000 url(../Img/background.jpg) no-repeat;
 	background-size: cover;
 	font-family: Arial;
--webkit-transition:background 0s linear 0.5s;
-   -moz-transition:background 0s linear 0.5s;
-     -o-transition:background 0s linear 0.5s;
-        transition:background 0s linear 0.5s;
+	display: block;
+	overflow: hidden;
+	position: relative;
 }
-body .slide{
+ninpp-viewer .pagination{
+	position: absolute;
+	top: 0.25em;
+	right: 0.25em;
+	padding: 0.25em;
+	background: rgba(128,128,128,0.75);
+	border-radius: 0.25em;
+	color: #FFF;
+}
+ninpp-viewer .globalprogression{
+	width: 100%;
+	height: 0.125em;
+	position: absolute;
+	bottom: 0;
+	border: 0;
+	background: rgba(128,128,128,0.4);
+}
+ninpp-viewer .globalprogression::-moz-progress-bar{
+	background: red;
+}
+/* slides */
+ninpp-viewer ninpp-slide{
 	background: rgba(50,50,50,0.8);
 	margin: 1%;
 	padding: 18px;
 	color: #fff;
-	position: relative;
 	overflow: hidden;
 	font-size: 18px;
+	display: block;
+	position: relative;
+	overflow: hidden;
+	display: none;
 }
-body header.slide h1{
-	margin: 9vh 1vw;
+ninpp-viewer ninpp-slide.on{
+	display: block;
 }
-body header.slide h1, body header.slide h2, body header.slide address{
+ninpp-viewer ninpp-slide h1{
+	font-size: 7em;
+}
+ninpp-viewer ninpp-slide h2{
+	font-size: 5em;
+}
+ninpp-viewer ninpp-slide h3{
+	font-size: 4em;
+}
+ninpp-viewer ninpp-slide p, ninpp-viewer ninpp-slide li{
+	font-size: 3em;
+}
+ninpp-viewer ninpp-slide a{
+	color : #FFF;
+}
+ninpp-viewer ninpp-slide a:hover{
+	text-shadow: 0 0 3ex #0063a6;
+}
+ninpp-viewer ninpp-slide ul{
+	margin: 1ex;
+}
+ninpp-viewer ninpp-slide li:before{
+	content: '✓';
+	margin: 0 0.5ex 0 0;
+	color: #0f0;	
+}
+ninpp-viewer ninpp-slide li.no:before{
+	content: '✕';
+	margin: 0 0.5ex 0 0;
+	color: #f00;	
+}
+ninpp-viewer ninpp-slide ul>li>ul{
+	margin: 0.5ex 1ex 0.5ex 1ex;
+}
+ninpp-viewer ninpp-slide ul>li>ul>li{
+	font-size: 0.8em;
+}
+ninpp-viewer ninpp-slide ul>li>ul>li:before{
+	content: '➜';
+	margin: 0 0.5ex 0 0;
+	color: #28bdbd;	
+}
+/* entête */
+ninpp-viewer ninpp-slide.head{
+	font-size: 24px;
 	text-align: center;
 }
-body header.slide h2{
-	font-size: 6em;
-}
-body header.slide address{
+ninpp-viewer ninpp-slide.head address{
 	position: absolute;
 	bottom: 5%;
 	left: 0;
 	width: 100%;
 	background: rgba(50,50,50,0.8);
-	font-size: 3vw;
+	font-size: 1em;
 }
-body .slide a{
-	color : #FFF;
-}
-body .slide a:hover{
-	text-shadow: 0 0 2vh #0063a6;
-}
-body .slide img{
-	display: block;
-	margin: 0 auto;
-	max-height: 40%;
-}
-body .slide h1{
-	font-size: 12em;
-}
-body .slide h2{
-	font-size: 9em;
-	margin: 5vh 1vw;
-}
-body .slide p, body .slide ul li{
-	font-size: 4em;
-}
-body .slide ul li ul li{
-	font-size: 0.75em;
-}
-body .slide ul li ul{
-	margin: 1vh 1vh 1vh 8vh;
-}
-body .slide ul{
-	margin: 5vh;
-}
-body .slide ul li:before{
-	content: '✓';
-	margin: 0 5vw 0 0;
-	color: #0f0;	
-}
-body .slide ul li ul li:before{
-	content: '➜';
-	margin: 0 2vw 0 0;
-	color: #28bdbd;	
-}
-body progress[data-type="overal"]{
-	position: absolute;
-	bottom: 0;
-	left: 0;
-}
-body progress[data-type="time"]{
-	position: absolute;
-	top: 0;
-	left: 0;
-}
-body progress{ 
-	width: 100%;
-	height: 0.5vh;
-	background-color: rgba(100,100,100,0.5);
-	border-radius: 0;
-	border: none;
-	box-shadow: none;
-	display: block;
-}
-body span.pagging{
-	background-color: rgba(128,128,128, 0.75);
-	position: absolute;
-	top: 1vh;
-	right: 1vw;
-	color: #FFF;
-	font-weight: bold;
-	font-size: 3vh;
-	padding: 0.5vh 0.5vw;
-	border-radius: 3px;
-}
-body .recorder{
-	display: block;
-	position: absolute;
-	top: 5px;
-	left: 5px;
-	width: 10px;
-	height: 10px;
-	background-color: #515151;
-	border-radius: 50%;
-	cursor: pointer;
-}
-body .recorder.recording{
-	background-color: #F00;
-}
-
 /*Animations*/
-
-body .delayed{
-visibility:hidden;
-opacity:0;
--webkit-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
-   -moz-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
-     -o-transition:visibility 0s linear 0.5s,opacity 0.5s linear;
-        transition:visibility 0s linear 0.5s,opacity 0.5s linear;
+ninpp-viewer ninpp-slide .delayed{
+	visibility:hidden;
+	opacity:0;
+	transform-origin: 0 50%;
+	transition:visibility .5s ease-in-out, opacity .5s ease-in-out, transform .5s ease-in-out;
 }
-body .delayed.rotateIn{
--webkit-transform:rotate(360deg);
-   -moz-transform:rotate(360deg);
-    -ms-transform:rotate(360deg);
-     -o-transform:rotate(360deg);
-        transform:rotate(360deg);
--webkit-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
-   -moz-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
-     -o-transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
-        transition:transform 0.5s ease-in-out 0s,visibility 0s linear 0.5s,opacity 0.5s linear;
+ninpp-viewer ninpp-slide .delayed.on{
+	visibility:visible;
+	opacity:1;
+	transition-delay:0s;
 }
-body .delayed.on{
-visibility:visible;
-opacity:1;
--webkit-transition-delay:0s;
-   -moz-transition-delay:0s;
-     -o-transition-delay:0s;
-        transition-delay:0s;
+ninpp-viewer ninpp-slide .delayed.rotate{
+	transform:rotate(360deg);
 }
-body .delayed.rotateIn.on{
--webkit-transform:rotate(0);
-   -moz-transform:rotate(0);
-    -ms-transform:rotate(0);
-     -o-transform:rotate(0);
-        transform:rotate(0);
+ninpp-viewer ninpp-slide .delayed.rotate.on{
+    transform:rotate(0);
+}
+ninpp-viewer ninpp-slide .delayed.slide.left, ninpp-viewer ninpp-slide .delayed.slide{
+	transform:translate(-20vw, 0);
+}
+ninpp-viewer ninpp-slide .delayed.slide.right{
+	transform:translate(20vw, 0);
+}
+ninpp-viewer ninpp-slide .delayed.slide.top{
+	transform:translate(0, -20vh);
+}
+ninpp-viewer ninpp-slide .delayed.slide.bottom{
+	transform:translate(0, 20vh);
+}
+ninpp-viewer ninpp-slide .delayed.slide.on{
+	transform:translate(0, 0);
+}
+ninpp-viewer ninpp-slide .delayed.scale.small, ninpp-viewer ninpp-slide .delayed.scale{
+	transform:scale(0);
+}
+ninpp-viewer ninpp-slide .delayed.scale.big{
+	transform:scale(50);
+}
+ninpp-viewer ninpp-slide .delayed.scale.on{
+	transform:scale(1);
 }
