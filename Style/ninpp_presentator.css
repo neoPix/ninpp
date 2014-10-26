@@ -1,0 +1,87 @@
+ninpp-presentator{
+	display: block;
+	height: 100vh;
+	width: 100vw;
+	background: #2b2b2b;
+	position: relative;
+}
+ninpp-presentator>ninpp-comment{
+	display: block;
+	padding: 5px;
+	height: calc(20vh - 19px);
+	overflow-y: scroll;
+	background: #4F4F4F;
+	color: #FFF;
+	margin-top: 5px;
+	border-radius: 5px;
+	border: 2px solid #6D6D6D;
+}
+ninpp-presentator>ul.slides{
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: #4F4F4F;
+	color: #FFF;
+	overflow-y: scroll;
+	border-radius: 5px;
+	border: 2px solid #6D6D6D;
+	width: calc(20vw - 9px);
+	height: calc(80vh - 4px);
+}
+ninpp-presentator>ul.slides>li{
+	display: block;
+	margin: 5px;
+	border-radius: 5px;
+	border: 2px solid #6D6D6D;
+	height: 15vw;
+}
+ninpp-presentator>ul.slides>li.on{
+	box-shadow: 0px 0px 5px 0px #34cdf9;
+}
+ninpp-presentator>ul.slides>li>ninpp-slide{
+	display: block;
+}
+/*Animations*/
+ninpp-viewer ninpp-slide .delayed{
+	visibility : visible;
+	opacity:0.4;
+	transform-origin: 0 50%;
+	transition:visibility .5s ease-in-out, opacity .5s ease-in-out, transform .5s ease-in-out;
+}
+ninpp-viewer ninpp-slide .delayed.on{
+	opacity:1;
+	transition-delay:0s;
+}
+ninpp-viewer ninpp-slide .delayed.rotate{
+	transform:rotate(0);
+}
+ninpp-viewer ninpp-slide .delayed.flip{
+	transform:rotateX(0);
+}
+ninpp-viewer ninpp-slide .delayed.flip.y{
+	transform:rotateY(0);
+}
+ninpp-viewer ninpp-slide .delayed.slide.left, ninpp-viewer ninpp-slide .delayed.slide{
+	transform:translate(0, 0);
+}
+ninpp-viewer ninpp-slide .delayed.slide.right{
+	transform:translate(0, 0);
+}
+ninpp-viewer ninpp-slide .delayed.slide.top{
+	transform:translate(0, 0);
+}
+ninpp-viewer ninpp-slide .delayed.slide.bottom{
+	transform:translate(0, 0);
+}
+ninpp-viewer ninpp-slide .delayed.slide.on{
+	transform:translate(0, 0);
+}
+ninpp-viewer ninpp-slide .delayed.scale.small, ninpp-viewer ninpp-slide .delayed.scale{
+	transform:scale(1);
+}
+ninpp-viewer ninpp-slide .delayed.scale.big{
+	transform:scale(1);
+}
+ninpp-viewer ninpp-slide .delayed.scale.on{
+	transform:scale(1);
+}

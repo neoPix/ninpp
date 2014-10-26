@@ -65,7 +65,7 @@ ninpp-viewer .globalprogression::-moz-progress-bar{
 	background: red;
 }
 /* slides */
-ninpp-viewer ninpp-slide{
+ninpp-slide{
 	background: rgba(50,50,50,0.8);
 	margin: 1%;
 	padding: 18px;
@@ -77,57 +77,60 @@ ninpp-viewer ninpp-slide{
 	overflow: hidden;
 	display: none;
 }
-ninpp-viewer ninpp-slide.on{
+ninpp-slide.on{
 	display: block;
 }
-ninpp-viewer ninpp-slide h1{
+ninpp-slide h1{
 	font-size: 7em;
 }
-ninpp-viewer ninpp-slide h2{
+ninpp-slide h2{
 	font-size: 5em;
 }
-ninpp-viewer ninpp-slide h3{
+ninpp-slide h3{
 	font-size: 4em;
 }
-ninpp-viewer ninpp-slide p, ninpp-viewer ninpp-slide li{
+ninpp-slide p, ninpp-slide li{
 	font-size: 3em;
 }
-ninpp-viewer ninpp-slide a{
+ninpp-slide a{
 	color : #FFF;
 }
-ninpp-viewer ninpp-slide a:hover{
+ninpp-slide a:hover{
 	text-shadow: 0 0 3ex #0063a6;
 }
-ninpp-viewer ninpp-slide ul{
+ninpp-slide ul{
 	margin: 1ex;
 }
-ninpp-viewer ninpp-slide li:before{
+ninpp-slide li:before{
 	content: '✓';
 	margin: 0 0.5ex 0 0;
 	color: #0f0;	
 }
-ninpp-viewer ninpp-slide li.no:before{
+ninpp-slide li.no:before{
 	content: '✕';
 	margin: 0 0.5ex 0 0;
 	color: #f00;	
 }
-ninpp-viewer ninpp-slide ul>li>ul{
+ninpp-slide ul>li>ul{
 	margin: 0.5ex 1ex 0.5ex 1ex;
 }
-ninpp-viewer ninpp-slide ul>li>ul>li{
+ninpp-slide ul>li>ul>li{
 	font-size: 0.8em;
 }
-ninpp-viewer ninpp-slide ul>li>ul>li:before{
+ninpp-slide ul>li>ul>li:before{
 	content: '➜';
 	margin: 0 0.5ex 0 0;
 	color: #28bdbd;	
 }
+ninpp-slide ninpp-comment{
+	display: none;
+}
 /* entête */
-ninpp-viewer ninpp-slide.head{
+ninpp-slide.head{
 	font-size: 24px;
 	text-align: center;
 }
-ninpp-viewer ninpp-slide.head address{
+ninpp-slide.head address{
 	position: absolute;
 	bottom: 5%;
 	left: 0;
@@ -152,6 +155,20 @@ ninpp-viewer ninpp-slide .delayed.rotate{
 }
 ninpp-viewer ninpp-slide .delayed.rotate.on{
     transform:rotate(0);
+}
+ninpp-viewer ninpp-slide .delayed.flip{
+	transform:rotateX(180deg);
+	transform-origin: 50% 50%;
+}
+ninpp-viewer ninpp-slide .delayed.flip.on{
+    transform:rotateX(0);
+}
+ninpp-viewer ninpp-slide .delayed.flip.y{
+	transform:rotateY(180deg);
+	transform-origin: 50% 50%;
+}
+ninpp-viewer ninpp-slide .delayed.flip.y.on{
+    transform:rotateY(0);
 }
 ninpp-viewer ninpp-slide .delayed.slide.left, ninpp-viewer ninpp-slide .delayed.slide{
 	transform:translate(-20vw, 0);

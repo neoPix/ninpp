@@ -33,6 +33,13 @@
 				}
 				return false;
 			},
+			setAnimationStage: function(animation){
+				this._delayedElements.forEach(function(delayed, i){
+					if(animation > i)
+						delayed.classList.add('on');
+				});
+				this._currentAnimation = animation;
+			},
 			update: function(view){
 				this.style.height = 'auto';
 				this.style.fontSize = 'inherit';
@@ -94,8 +101,8 @@
 				this.__onResize = function(evt){$this._slides[$this.slide].update($this);};
 				window.addEventListener('resize', this.__onResize);
 				
-				this.__onAnimationNext = function(){$this.dispatchEvent(new Event('nextAnimation'));};
-				this.__onAnimationPrevious = function(){$this.dispatchEvent(new Event('previousAnimation'));};
+				this.__onAnimationNext = function(){$this.dispatchEvent(new CustomEvent('nextAnimation', {detail:{ noDispatch : $this._noDispatch }}));};
+				this.__onAnimationPrevious = function(){$this.dispatchEvent(new CustomEvent('previousAnimation', {detail:{ noDispatch : $this._noDispatch }}));};
 				
 				this._slides = Array.prototype.slice.call(this.getElementsByTagName('ninpp-slide'));
 				this._prepareSlides();
@@ -154,22 +161,24 @@
 				this._slides[this.slide].addEventListener('next', this.__onAnimationNext);
 				this._slides[this.slide].addEventListener('previous', this.__onAnimationPrevious);
 			},
-			next: function(){
+			next: function(noDispatch){
+				this._noDispatch = noDispatch || false;
 				if(!this._slides[this.slide].next()){
 					if(this.slide < this._slides.length - 1){
 						this.setSlide(this.slide + 1);
-						this.dispatchEvent(new Event('next'));
+						this.dispatchEvent(new CustomEvent('next', {detail:{ noDispatch : this._noDispatch }}));
 						return true;
 					}
 				}
 				else return true;
 				return false;
 			},
-			previous: function(){
+			previous: function(noDispatch){
+				this._noDispatch = noDispatch || false;
 				if(!this._slides[this.slide].previous()){
 					if(this.slide > 0){
 						this.setSlide(this.slide - 1);
-						this.dispatchEvent(new Event('previous'));
+						this.dispatchEvent(new CustomEvent('previous', {detail:{ noDispatch : this._noDispatch }}));
 						return true;
 					}
 				}
@@ -250,7 +259,7 @@
 				this.viewer.removeEventListener('previous', this.__onPreviousSlide);
 				this.viewer.removeEventListener('nextAnimation', this.__onNextAnimation);
 				this.viewer.removeEventListener('previousAnimation', this.__onPreviousAnimation);
-				window.removeInterval(this.__timer);
+				window.clearInterval(this.__timer);
 			},
 			_swiped: function(direction){
 				var sensibility = {x: this.sensibility * this.offsetWidth, y:this.sensibility * this.offsetHeight};
@@ -298,11 +307,11 @@
 					if(event.detail.video){
 						$this.getArrayFromBlob(event.detail.video, function(arrayBuffer){
 							zip.file("record.webm", arrayBuffer);
-							saveAs(zip.generate({type:"blob"}), "presentation.zip");
+							saveAs(zip.generate({type:"blob"}), "presentation.npf");
 						});
 					}
 					else
-						saveAs(zip.generate({type:"blob"}), "presentation.zip");
+						saveAs(zip.generate({type:"blob"}), "presentation.npf");
 				});
 			},
 			getArrayFromBlob: function(blob, callback){
@@ -338,7 +347,51 @@
 				}
 			},
 			setPresentator: function(){
-				console.log('Passage en mode présentateur');
+				var $this = this;
+				if(!this._presentator || this._presentator.closed){
+					this._presentator = window.open("Lib/presentator.html", "presentator", "menubar=no,location=no");
+					this._presentator.ninppPresentatorloading = function(){
+						var p = $this._presentator.document.getElementsByTagName('ninpp-player')[0];
+						p.innerHTML = $this.viewer.initial;
+						$this._presentator.onload= function(){
+							p.controls = false;
+							p.duration = $this.duration;
+							p.sensibility = $this.sensibility;
+							p.viewer.setSlide($this.viewer.slide);
+							p.viewer._slides[p.viewer.slide].setAnimationStage($this.viewer._slides[$this.viewer.slide]._currentAnimation);
+
+							p.viewer.style.height = '80vh';
+							p.viewer.style.width = '80vw';
+							p.setChild($this);
+							$this.setChild(p);
+						};
+						$this._presentator.onclose= function(){
+							$this.unsetChild();
+							p.unsetChild();
+						};
+					};
+				}
+				else{
+					this._presentator.close();
+				}
+			},
+			setChild: function(player){
+				this.child = player, $this = this;
+				
+				this.__childGoNext = function(evt){ if(!evt.detail.noDispatch)$this.child.viewer.next(true); };
+				this.__childGoPrevious = function(evt){ if(!evt.detail.noDispatch)$this.child.viewer.previous(true); };				
+
+				this.viewer.addEventListener('next', this.__childGoNext);
+				this.viewer.addEventListener('previous', this.__childGoPrevious);
+				this.viewer.addEventListener('nextAnimation', this.__childGoNext);
+				this.viewer.addEventListener('previousAnimation', this.__childGoPrevious);
+			},
+			unsetChild: function(){
+				this.child = null;
+				this.viewer.removeEventListener('next', this.__childGoNext);
+				this.viewer.removeEventListener('previous', this.__childGoPrevious);
+				this.viewer.removeEventListener('nextAnimation', this.__childGoNext);
+				this.viewer.removeEventListener('previousAnimation', this.__childGoPrevious);
 			},
 			setFullScreen: function(){
 				if (this.requestFullscreen) {
@@ -419,6 +472,85 @@
 				}
 				else{
 					this._recorder.stopRecording();
+				}
+			}
+		}
+	});
+	xtag.register('ninpp-comment', {
+		extends: 'div'
+	});
+	xtag.register('ninpp-presentator', {
+		extends: 'div',
+		lifecycle:{
+			created: function(){
+				this._init();
+			},
+			removed: function(){
+				this._remove();
+			}
+	  	},
+		methods: {
+			_init: function(){
+				var $this = this;
+				this._player = this.getElementsByTagName('ninpp-player')[0];
+
+				this.__slideChanged = function(){ $this.setComments(); $this.setSlide(); };
+				this._player.viewer.addEventListener('next', this.__slideChanged);
+				this._player.viewer.addEventListener('previous', this.__slideChanged);
+
+				this.slides = document.createElement('ul');
+				this.slides.classList.add('slides');
+				this.appendChild(this.slides);
+				this.setSlides();
+
+				this.setComments();
+				this.setSlide();
+			},
+			_remove : function(){
+				this._player.viewer.removeEventListener('next', this.__slideChanged);
+				this._player.viewer.removeEventListener('previous', this.__slideChanged);
+			},
+			setSlide: function(){
+				var $this = this;
+				Array.prototype.slice.call(this.slides.childNodes).forEach(function(slide, i){
+					if(i == $this._player.viewer.slide){
+						slide.classList.add('on');
+						var slideStyle = slide.currentStyle || window.getComputedStyle(slide);
+						$this.slides.scrollTop = i * (slide.offsetHeight + parseFloat(slideStyle.marginTop.replace('px', ''))) ;
+					}
+					else
+						slide.classList.remove('on');
+				});
+			},
+			setSlides: function(){
+				var $this = this;
+				var playerStyle = this._player.viewer.currentStyle || window.getComputedStyle(this._player.viewer);
+				this._player.viewer._slides.forEach(function(slide, i){
+					var li = document.createElement('li');
+					li.style.backgroundImage = playerStyle.backgroundImage;
+					li.style.backgroundSize = playerStyle.backgroundSize;
+					var slide = slide.cloneNode(true);
+					li.appendChild(slide);
+					li.removeAttribute('id');
+					$this.slides.appendChild(li);
+					slide.update(li);
+					li.__slideClick = function(event){ 
+						$this._player.viewer.setSlide(i);
+						$this._player.child.viewer.setSlide(i);
+						$this.setSlide();
+						$this.setComments();
+					};
+					li.addEventListener('click', li.__slideClick);
+				});
+			},
+			setComments: function(){
+				var $this = this;
+				Array.prototype.slice.call(this.childNodes).forEach(function(child, i){
+					if(child.tagName == 'NINPP-COMMENT') $this.removeChild(child);
+				});
+				var comments = this._player.viewer._slides[this._player.viewer.slide].getElementsByTagName('ninpp-comment');
+				if(comments && comments.length > 0){
+					this.appendChild(comments[0].cloneNode(true));
 				}
 			}
 		}
