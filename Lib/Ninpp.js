@@ -409,8 +409,10 @@
 				} else if (this.mozRequestFullScreen) {
 					this.mozRequestFullScreen();
 				} else if (this.webkitRequestFullscreen) {
-					this.webkitRequestFullscreen();
+					document.body.webkitRequestFullscreen();
 				}
+				if(this.__controls)
+					this.__controls.toogleOpen(false);
 			},
 			unSetFullScreen: function(){
 				if (this.exitFullscreen) {
@@ -420,7 +422,7 @@
 				} else if (this.mozCancelFullScreen) {
 					this.mozCancelFullScreen();
 				} else if (this.webkitCancelFullScreen) {
-					this.webkitCancelFullScreen();
+					document.body.webkitCancelFullScreen();
 				}
 			}
 		}
@@ -476,11 +478,12 @@
 				this._record.removeEventListener('touchend', this.__recordEvent);
 				this._open.removeEventListener('touchend', this.__openOrCloseEvent);
 			},
-			toogleOpen: function(){
-				if(this.classList.contains('on'))
-					this.classList.remove('on');
-				else
+			toogleOpen: function(toogle){
+				if(typeof toogle == 'undefined') toogle = false;
+				if(!this.classList.contains('on') || toogle)
 					this.classList.add('on');
+				else
+					this.classList.remove('on');
 			},
 			toogleRecord: function(){
 				var $this = this;
@@ -597,9 +600,7 @@ NinppRecorder.prototype = {
 	start: function(){
 		var $this = this;
 		this.stream = {};
-		debugger;
 		navigator.getUserMedia({audio: true, video: false}, function(streamaudio) {
-			debugger;
 			$this.stream.audioStream = streamaudio;
 			navigator.getUserMedia({audio: false, video: true}, function(streamvideo) {
 				$this.stream.videoStream = streamvideo;
@@ -609,7 +610,6 @@ NinppRecorder.prototype = {
 				$this.startRecording();
 			});
 		}, function(e){
-			debugger;
 			console.error('No audio device');
 			$this.recordFail(e);
 		});
@@ -618,8 +618,8 @@ NinppRecorder.prototype = {
 	startRecording: function(){
 		var $this=this;
 		this.recorder = {};
-		if(typeof this.stream.audioStream != 'undefined') this.recorder.audioStreamRecorder = RecordRTC(this.stream.audioStream);
-		if(typeof this.stream.videoStream != 'undefined') this.recorder.videoStreamRecorder = RecordRTC(this.stream.videoStream);
+		if(typeof this.stream.audioStream != 'undefined') this.recorder.audioStreamRecorder = RecordRTC(this.stream.audioStream, {type: 'audio'});
+		if(typeof this.stream.videoStream != 'undefined') this.recorder.videoStreamRecorder = RecordRTC(this.stream.videoStream, {type: 'video'});
 		
 		if(typeof this.recorder.audioStreamRecorder != 'undefined') this.recorder.audioStreamRecorder.startRecording();
 		if(typeof this.recorder.videoStreamRecorder != 'undefined') this.recorder.videoStreamRecorder.startRecording();
