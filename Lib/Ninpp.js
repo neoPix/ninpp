@@ -225,6 +225,14 @@
 				
 				this.__onKeyPress = function(event) {$this._keyPressed(event);};
 				this.__onSwipeStart = function(event) {$this.__swipeStart = {x: event.clientX, y:event.clientY};};
+				this.__onTouchStart = function(event) { $this.__swipeStart = {x: event.changedTouches[0].clientX, y:event.changedTouches[0].clientY};};
+				this.__onTouchEnd = function(event) {
+					event.preventDefault();
+					$this.__swipeEnd = {x: event.changedTouches[0].clientX, y:event.changedTouches[0].clientY}; 
+					$this._swiped({x: $this.__swipeEnd.x - $this.__swipeStart.x, y: $this.__swipeEnd.y - $this.__swipeStart.y});
+					delete $this.__swipeStart;
+					delete $this.__swipeEnd;
+				};
 				this.__onSwipeEnd = function(event) {
 					event.preventDefault();
 					$this.__swipeEnd = {x: event.clientX, y:event.clientY}; 
@@ -239,9 +247,9 @@
 				$this.currentTime = 0;
 				window.addEventListener('keydown', this.__onKeyPress);
 				this.addEventListener('mousedown', this.__onSwipeStart);
-				this.addEventListener('touchstart', this.__onSwipeStart);
+				this.addEventListener('touchstart', this.__onTouchStart);
 				this.addEventListener('mouseup', this.__onSwipeEnd);
-				this.addEventListener('touchend', this.__onSwipeEnd);
+				this.addEventListener('touchend', this.__onTouchEnd);
 				this.viewer.addEventListener('next', this.__onNextSlide);
 				this.viewer.addEventListener('previous', this.__onPreviousSlide);
 				this.viewer.addEventListener('nextAnimation', this.__onNextAnimation);
@@ -430,10 +438,11 @@
 		methods: {
 			_init: function(){
 				var $this = this;
-				this.innerHTML = '<span class="option fullScreen">↕</span><span class="option presentator"/>🐵</span><span class="option record">⚫</span>';
+				this.innerHTML = '<span class="openner"></span><span class="option fullScreen">↕</span><span class="option presentator"/>🐵</span><span class="option record">⚫</span>';
 				this._fullScreen = this.getElementsByClassName('fullScreen')[0];
 				this._presentator = this.getElementsByClassName('presentator')[0];
 				this._record = this.getElementsByClassName('record')[0];
+				this._open = this.getElementsByClassName('openner')[0];
 				
 				this.__fullScreenEvent = function(event){ 
 					$this.dispatchEvent(new Event('fullscreen'));
@@ -444,15 +453,34 @@
 				this.__recordEvent = function(event){ 
 					$this.toogleRecord();
 				};
+				this.__openOrCloseEvent = function(event){ 
+					$this.toogleOpen();
+				};
 				
 				this._fullScreen.addEventListener('click', this.__fullScreenEvent);
 				this._presentator.addEventListener('click', this.__presentatorEvent);
 				this._record.addEventListener('click', this.__recordEvent);
+				this._open.addEventListener('click', this.__openOrCloseEvent);
+				this._fullScreen.addEventListener('touchend', this.__fullScreenEvent);
+				this._presentator.addEventListener('touchend', this.__presentatorEvent);
+				this._record.addEventListener('touchend', this.__recordEvent);
+				this._open.addEventListener('touchend', this.__openOrCloseEvent);
 			},
 			_remove: function(){
 				this._fullScreen.removeEventListener('click', this.__fullScreenEvent);
 				this._presentator.removeEventListener('click', this.__presentatorEvent);
 				this._record.removeEventListener('click', this.__recordEvent);
+				this._open.removeEventListener('click', this.__openOrCloseEvent);
+				this._fullScreen.removeEventListener('touchend', this.__fullScreenEvent);
+				this._presentator.removeEventListener('touchend', this.__presentatorEvent);
+				this._record.removeEventListener('touchend', this.__recordEvent);
+				this._open.removeEventListener('touchend', this.__openOrCloseEvent);
+			},
+			toogleOpen: function(){
+				if(this.classList.contains('on'))
+					this.classList.remove('on');
+				else
+					this.classList.add('on');
 			},
 			toogleRecord: function(){
 				var $this = this;
@@ -462,13 +490,14 @@
 						$this._record.classList.remove('on');
 					};
 					this._recorder.manageBlob = function(blobAudio, blobVideo){
+						$this._record.classList.remove('on');
 						$this.dispatchEvent(new CustomEvent('recordReady', {detail: {audio: blobAudio, video: blobVideo}}));
 					};
 					this._recorder.recordStarted = function(){
+						$this._record.classList.add('on');
 						$this.dispatchEvent(new Event('recordStarted'));
 					};
 					this._recorder.start();
-					$this._record.classList.add('on');
 				}
 				else{
 					this._recorder.stopRecording();
@@ -568,7 +597,9 @@ NinppRecorder.prototype = {
 	start: function(){
 		var $this = this;
 		this.stream = {};
+		debugger;
 		navigator.getUserMedia({audio: true, video: false}, function(streamaudio) {
+			debugger;
 			$this.stream.audioStream = streamaudio;
 			navigator.getUserMedia({audio: false, video: true}, function(streamvideo) {
 				$this.stream.videoStream = streamvideo;
@@ -578,6 +609,7 @@ NinppRecorder.prototype = {
 				$this.startRecording();
 			});
 		}, function(e){
+			debugger;
 			console.error('No audio device');
 			$this.recordFail(e);
 		});

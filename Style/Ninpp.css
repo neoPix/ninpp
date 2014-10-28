@@ -2,16 +2,29 @@ ninpp-player ninpp-player-controls{
 	display: block;
 	position: absolute;
 	top: 50%;
-	margin: -64px -35px 0 0;
-	right: 0;
+	margin: -64px 0 0 0;
+	transform: translate(-40px, 0);
+	left: 0;
 	width: 40px;
 	height: 128px;
 	background: rgba(128,128,128,0.4);
 	transition:margin-right .5s ease-in-out, background-color .5s ease-in-out;
-	border-radius: 5px 0 0 5px;
+	border-radius: 0 0 5px 0;
 }
-ninpp-player ninpp-player-controls:hover, ninpp-player [is="ninpp-player-controls"]:hover{
-	margin-right: 0;
+ninpp-player ninpp-player-controls.on{
+	transform: translate(0, 0);
+	background: rgba(128,128,128,0.9);
+}
+ninpp-player ninpp-player-controls .openner{
+	background: rgba(128,128,128,0.4);
+	float: right;
+	margin-right: -20px;
+	width: 20px;
+	height: 40px;
+	cursor: pointer;
+	border-radius: 0 5px 5px 0;
+}
+ninpp-player ninpp-player-controls .openner:hover, ninpp-player ninpp-player-controls.on .openner{
 	background: rgba(128,128,128,0.9);
 }
 ninpp-player ninpp-player-controls .option{
@@ -26,9 +39,6 @@ ninpp-player ninpp-player-controls .option{
 }
 ninpp-player ninpp-player-controls .option:hover{
 	opacity: 1;
-}
-ninpp-player ninpp-player-controls .option.fullScreen{
-	transform: rotate(45deg);
 }
 ninpp-player ninpp-player-controls .option.record:hover, ninpp-player ninpp-player-controls .option.record.on{
 	color: red;
