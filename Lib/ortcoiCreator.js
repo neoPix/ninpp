@@ -18,52 +18,80 @@ Ninpp.ortcoiCreator.prototype = {
 		reader.readAsBinaryString(file);
 	},
 	_checkZip: function(){
-		if(typeof this._zip.files['record.json'] != 'undefined'
-			&& typeof this._zip.files['record.ogg'] != 'undefined'
-			&& typeof this._zip.files['slides.html'] != 'undefined'){
-			this._step1.style.display = 'none';
-			this._convertVideo();
-		}
+		this._step1.style.display = 'none';
+		this._compressVideoAndAudio();
 	},
-	_getWorker: function(){
-		this._worker = new Worker('../Lib/worker.js');
+	_getWorker: function(onReady, onDone){
+		var worker = new Worker('../Lib/worker.js');
+		worker.onmessage = function(event) {
+			var message = event.data;
+			if (message.type == "ready") {
+				onReady(worker);
+			} else if (message.type == "stdout") {
+				console.log(message.data);
+			} else if (message.type == "stderr") {
+				console.log('ERROR : ' + message.data);
+			} else if (message.type == "start") {
+				
+			} else if (message.type == "done") {
+				onDone(message.data[0]);
+			}
+		};
+		return worker;
 	},
-	_convertVideo: function(){
+
+	_compressVideoAndAudio: function(){
 		var $this = this;
-		if(typeof this._zip.files['record.webm'] != 'undefined'){
-			var audio = this._zip.files['record.ogg'].asUint8Array(),
-				video = this._zip.files['record.webm'].asUint8Array();
-			var worker = this._getWorker();
-			this._worker.onmessage = function(event) {
-				var message = event.data;
-				if (message.type == "ready") {
-					$this._startConvert(video);
-				} else if (message.type == "stdout") {
-					console.log(message.data);
-				} else if (message.type == "stderr") {
-					console.log('ERROR : ' + message.data);
-				} else if (message.type == "start") {
-					
-				} else if (message.type == "done") {
-					var result = message.data[0];
-					$this._preparePackage(audio, result.data);
-				}
-			};
+		var audio = null, video = null, count = 0, done = 0, results = {};
+		var untilDone = function(){
+			if(done == count){
+				$this._convertDone(results);
+			}
+		};
+		if(typeof this._zip.files['record.wav'] != 'undefined'){
+			audio = this._zip.files['record.wav'].asUint8Array();
+			this._getWorker(function(w){
+				count++;
+				$this._startConvertAudio(audio, 'wav', w);
+			}, function(data){
+				results.audio = data;
+				done++;
+				untilDone();
+			});
 		}
-		else{
-			this._preparePackage(audio, null);
+		if(typeof this._zip.files['record.ogg'] != 'undefined'){
+			audio = this._zip.files['record.ogg'].asUint8Array();
+			results.audio = { name:"output.ogg", data:audio};
+		}
+		if(typeof this._zip.files['record.webm'] != 'undefined'){
+			video = this._zip.files['record.webm'].asUint8Array();
+			this._getWorker(function(w){
+				count++;
+				$this._startConvertVideo(video, audio == null, w);
+			}, function(data){
+				results.video = data;
+				done++;
+				untilDone();
+			});
 		}
 	},
-	_startConvert: function(video){
-		this._worker.postMessage({
+	_startConvertVideo: function(video, withAudio, worker){
+		var args = [
+			'-i', 'video.webm',
+			'-c:v', 'mpeg4',
+			'-b:v', '350k'
+		];
+		if(withAudio){
+			args.push('-c:a');
+			args.push('copy');
+		}
+		args.push('-strict');
+		args.push('experimental');
+		args.push('output.mp4');
+
+		worker.postMessage({
 			type: 'command',
-			arguments: [
-				'-i', 'video.webm',
-				'-c:v', 'mpeg4',
-				'-b:v', '500k',
-				'-strict', 'experimental',
-				'output.mp4'
-			],
+			arguments: args,
 			files: [
 				{
 					data: video,
@@ -72,22 +100,40 @@ Ninpp.ortcoiCreator.prototype = {
 			]
 		});
 	},
-	_getHtml: function(audio, video){
-		var html = '<html><head><link href="Style/reset.css" rel="stylesheet" /><link href="Style/ninpp.css" rel="stylesheet" /></head><body>';
-		html += this._zip.file('slides.html').asText();
-		html += '<div id="player"><audio src="audio.ogg" id="audio"/>';
-		if(video)
-			html += '<video src="video.mp4" id="video">';
-		html += '</div><script>var history = '+this._zip.file('record.json').asText()+';</script>';
-		html += '<script src="Lib/x-tag.js"></script><script src="Lib/ninpp.js"></script><script src="Lib/ortcoi.js"></script></body></html>';
-		return html;
+	_startConvertAudio: function(audio, type, worker){
+		var args = [
+			'-i', 'audio.ext',
+		];
+		if(type == "ogg"){
+			args.push('-c:a');
+			args.push('copy');
+		}
+		else if(type == "ogg"){
+			args.push('-c:a');
+			args.push('vorbis');
+		}
+		args.push('-strict');
+		args.push('experimental');
+		args.push('output.ogg');
+
+		worker.postMessage({
+			type: 'command',
+			arguments: args,
+			files: [
+				{
+					data: audio,
+					name: 'audio.ext'
+				}
+			]
+		});
 	},
-	_preparePackage: function(audio, video){
+	_convertDone: function(done){
 		zip = new JSZip();
-		zip.file("index.html", this._getHtml(audio, video));
-		zip.file("audio.ogg", audio);
-		if(video) zip.file("video.mp4", video);
-		saveAs(zip.generate({type:"blob"}), "presentation.zip");
+		if(done.audio)
+			zip.file("audio.ogg", done.audio.data);
+		if(done.video)
+			zip.file("video.mp4", done.video.data);
+		saveAs(zip.generate({type:"blob"}), "compressed.zip");
 	}
 };
 

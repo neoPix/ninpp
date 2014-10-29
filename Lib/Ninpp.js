@@ -337,7 +337,7 @@
 				zip.file("record.json", JSON.stringify(this._history));
 				zip.file("slides.html", this.viewer.initial);
 
-				var isChrome = !!navigator.webkitGetUserMedia, waitingFor = ((event.detail.audio)?1:0) + ((event.detail.video)?1:0), done = 0;
+				var waitingFor = ((event.detail.audio)?1:0) + ((event.detail.video)?1:0), done = 0;
 				var onDone = function(){
 					if(waitingFor == done){
 						saveAs(zip.generate({type:"blob"}), "presentation.npf");
@@ -346,18 +346,31 @@
 
 				if(event.detail.audio){
 					this.getArrayFromBlob(event.detail.audio, function(arrayBuffer){
-						zip.file('record.' + (isChrome ? 'wav': 'ogg'), arrayBuffer);
+						zip.file('record.' + $this._getExtention(event.detail.audio.type), arrayBuffer);
 						done++;
 						onDone();
 					});
 				}
 				if(event.detail.video){
 					this.getArrayFromBlob(event.detail.video, function(arrayBuffer){
-						zip.file("record.webm", arrayBuffer);
+						zip.file('record.' + $this._getExtention(event.detail.video.type), arrayBuffer);
 						done++;
 						onDone();
 					});
 				}				
+			},
+			_getExtention: function(type){
+				switch(type){
+					case 'audio/ogg':
+						return 'ogg';
+					case 'video/webm':
+						return 'webm';
+					case 'audio/wav':
+						return 'wav';
+					default: 
+						var type = type.split('/');
+						return type[type.length-1];
+				}
 			},
 			getArrayFromBlob: function(blob, callback){
 				var reader = new FileReader();
@@ -531,6 +544,7 @@
 					};
 					this._recorder.manageBlob = function(blobAudio, blobVideo){
 						$this._record.classList.remove('on');
+						console.log(blobVideo);
 						$this.dispatchEvent(new CustomEvent('recordReady', {detail: {audio: blobAudio, video: blobVideo}}));
 					};
 					this._recorder.recordStarted = function(){

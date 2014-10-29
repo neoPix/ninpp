@@ -60,6 +60,11 @@ onmessage = function(event) {
       'time' : totalTime
     });
   }
+  else if(message.type === "ready?"){
+    postMessage({
+      'type' : 'ready'
+    });
+  }
 };
 
 postMessage({
