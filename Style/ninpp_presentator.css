@@ -34,11 +34,20 @@ ninpp-presentator>ul.slides>li{
 	border-radius: 5px;
 	border: 2px solid #6D6D6D;
 	height: 15vw;
+	position: relative;
 }
 ninpp-presentator>ul.slides>li.on{
 	box-shadow: 0px 0px 5px 0px #34cdf9;
 }
 ninpp-presentator>ul.slides>li>ninpp-slide{
+	display: block;
+}
+ninpp-presentator ninpp-slide{
+	transform: none;
+	transition: none;
+	display: none;
+}
+ninpp-presentator ninpp-slide.on{
 	display: block;
 }
 /*Animations*/

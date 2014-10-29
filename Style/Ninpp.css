@@ -1,3 +1,4 @@
+/* Player */
 ninpp-player ninpp-player-controls{
 	display: block;
 	position: absolute;
@@ -46,8 +47,6 @@ ninpp-player ninpp-player-controls .option.record:hover, ninpp-player ninpp-play
 ninpp-viewer{
 	margin: 0;
 	padding: 0.01px; /* Hack moche mais fonctionnel, trouver une solution */
-	background: #000 url(../Img/background.jpg) no-repeat;
-	background-size: cover;
 	font-family: Arial;
 	display: block;
 	overflow: hidden;
@@ -75,58 +74,69 @@ ninpp-viewer .globalprogression::-moz-progress-bar{
 }
 /* slides */
 ninpp-slide{
+	background: #000 url(../Img/background.jpg) no-repeat;
+	background-size: cover;
+	color: #fff;
+	position: absolute;
+	top: 0;
+	left: 0;
+	overflow: hidden;
+	display: block;
+	overflow: hidden;
+	transform: translate(100vw, 0);
+	transition: transform .5s ease-in-out;
+}
+ninpp-slide.on{
+	transform: translate(0, 0);
+}
+ninpp-slide.passed{
+	transform: translate(-100vw, 0);
+}
+ninpp-slide section.content{
 	background: rgba(50,50,50,0.8);
 	margin: 1%;
 	padding: 18px;
-	color: #fff;
-	overflow: hidden;
-	font-size: 18px;
-	display: block;
 	position: relative;
-	overflow: hidden;
-	display: none;
+	font-size: 18px;
 }
-ninpp-slide.on{
-	display: block;
-}
-ninpp-slide h1{
+ninpp-slide section.content h1{
 	font-size: 7em;
 }
-ninpp-slide h2{
+ninpp-slide section.content h2{
 	font-size: 5em;
 }
-ninpp-slide h3{
+ninpp-slide section.content h3{
 	font-size: 4em;
 }
-ninpp-slide p, ninpp-slide li{
+ninpp-slide section.content p, ninpp-slide section.content li{
 	font-size: 3em;
 }
-ninpp-slide a{
+ninpp-slide section.content a{
 	color : #FFF;
 }
-ninpp-slide a:hover{
+ninpp-slide section.content a:hover{
 	text-shadow: 0 0 3ex #0063a6;
 }
-ninpp-slide ul{
+ninpp-slide section.content ul{
 	margin: 1ex;
 }
-ninpp-slide li:before{
+ninpp-slide section.content li:before{
 	content: '✓';
 	margin: 0 0.5ex 0 0;
 	color: #0f0;	
 }
-ninpp-slide li.no:before{
+ninpp-slide section.content li.no:before{
 	content: '✕';
 	margin: 0 0.5ex 0 0;
 	color: #f00;	
 }
-ninpp-slide ul>li>ul{
+ninpp-slide section.content ul>li>ul{
 	margin: 0.5ex 1ex 0.5ex 1ex;
 }
-ninpp-slide ul>li>ul>li{
+ninpp-slide section.content ul>li>ul>li{
 	font-size: 0.8em;
 }
-ninpp-slide ul>li>ul>li:before{
+ninpp-slide section.content ul>li>ul>li:before{
 	content: '➜';
 	margin: 0 0.5ex 0 0;
 	color: #28bdbd;	

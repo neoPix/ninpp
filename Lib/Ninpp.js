@@ -8,14 +8,31 @@
 	  	},
 		methods: {
 			_initialize: function(){
+				var contentTab = this.getElementsByClassName('content');
+				if(contentTab.length > 0){
+					this.content = contentTab[0];
+				}
+				else{
+					this.content = document.createElement('section');
+					this.content.classList.add('content');
+					this.content.innerHTML = this.innerHTML;
+					this.innerHTML = '';
+					this.appendChild(this.content);
+				}
 				this._delayedElements = Array.prototype.slice.call(this.getElementsByClassName('delayed'));
 				this._currentAnimation = 0;
 			},
 			hide: function(){
 				this.classList.remove('on');
+				this.classList.remove('passed');
+			},
+			passed: function(){
+				this.classList.remove('on');
+				this.classList.add('passed');
 			},
 			show: function(){
 				this.classList.add('on');
+				this.classList.remove('passed');
 			},
 			next: function(slideRef){
 				if(this._currentAnimation < this._delayedElements.length){
@@ -41,10 +58,14 @@
 				this._currentAnimation = animation;
 			},
 			update: function(view){
-				this.style.height = 'auto';
-				this.style.fontSize = 'inherit';
-				var thisStyle = view.currentStyle || window.getComputedStyle(view), height = parseFloat(thisStyle.height.replace('px', ''));
-				var style = this.currentStyle || window.getComputedStyle(this);
+				this.content.style.height = 'auto';
+				this.content.style.fontSize = 'inherit';
+				var thisStyle = view.currentStyle || window.getComputedStyle(view), height = parseFloat(thisStyle.height.replace('px', '')), width = parseFloat(thisStyle.width.replace('px', ''));
+
+				this.style.height = thisStyle.height;
+				this.style.width = thisStyle.width;
+
+				var style = this.content.currentStyle || window.getComputedStyle(this.content);
 				var marginTop = parseFloat(style.marginTop.replace('px', '')),
 				    marginBottom = parseFloat(style.marginBottom.replace('px', ''))
 				    paddingTop = parseFloat(style.paddingTop.replace('px', '')),
@@ -53,8 +74,8 @@
 					defaultFontSize = parseFloat(style.fontSize.replace('px', '')), 
 					fontSize = (defaultFontSize * (slideHeight / parseFloat(style.height.replace('px', ''))));
 				
-				this.style.fontSize =  Math.min(fontSize, defaultFontSize) + 'px';
-				this.style.height = slideHeight + 'px';
+				this.content.style.fontSize =  Math.min(fontSize, defaultFontSize) + 'px';
+				this.content.style.height = slideHeight + 'px';
 			}
 		}
 	});
@@ -147,6 +168,7 @@
 				this._slides.forEach(function(slide, i){ if(!slide.getAttribute('id')) slide.setAttribute('id', 'slide' + (i+1)); });
 			},
 			setSlide: function(slidePosition){
+				var $this = this;
 				this.slide = this.slide || 0;
 				this._slides[this.slide].removeEventListener('next', this.__onAnimationNext);
 				this._slides[this.slide].removeEventListener('previous', this.__onAnimationPrevious);
@@ -154,7 +176,11 @@
 				if(slidePosition == null)slidePosition = this.slide;
 				this.slide = slidePosition;
 
-				this._slides.forEach(function(slide){ slide.hide(); });
+				this._slides.forEach(function(slide, i){ 
+					if(i > $this.slide) 
+						slide.hide(); 
+					else slide.passed();
+				});
 				this._slides[this.slide].show();
 				this._slides[this.slide].update(this);
 				
