@@ -336,17 +336,28 @@
 				var $this = this,zip = new JSZip();
 				zip.file("record.json", JSON.stringify(this._history));
 				zip.file("slides.html", this.viewer.initial);
-				this.getArrayFromBlob(event.detail.audio, function(arrayBuffer){
-					zip.file("record.ogg", arrayBuffer);
-					if(event.detail.video){
-						$this.getArrayFromBlob(event.detail.video, function(arrayBuffer){
-							zip.file("record.webm", arrayBuffer);
-							saveAs(zip.generate({type:"blob"}), "presentation.npf");
-						});
-					}
-					else
+
+				var isChrome = !!navigator.webkitGetUserMedia, waitingFor = ((event.detail.audio)?1:0) + ((event.detail.video)?1:0), done = 0;
+				var onDone = function(){
+					if(waitingFor == done){
 						saveAs(zip.generate({type:"blob"}), "presentation.npf");
-				});
+					}
+				};
+
+				if(event.detail.audio){
+					this.getArrayFromBlob(event.detail.audio, function(arrayBuffer){
+						zip.file('record.' + (isChrome ? 'wav': 'ogg'), arrayBuffer);
+						done++;
+						onDone();
+					});
+				}
+				if(event.detail.video){
+					this.getArrayFromBlob(event.detail.video, function(arrayBuffer){
+						zip.file("record.webm", arrayBuffer);
+						done++;
+						onDone();
+					});
+				}				
 			},
 			getArrayFromBlob: function(blob, callback){
 				var reader = new FileReader();
@@ -620,52 +631,80 @@ var NinppRecorder = function(){
                          navigator.webkitGetUserMedia ||
                           navigator.mozGetUserMedia || 
                            navigator.msGetUserMedia;
+    this.isChrome = !!navigator.webkitGetUserMedia;
 };
 NinppRecorder.prototype = {
 	/// Préparation et démarage de l'enregistrement Video et Audio
 	start: function(){
 		var $this = this;
 		this.stream = {};
-		navigator.getUserMedia({audio: true, video: false}, function(streamaudio) {
-			$this.stream.audioStream = streamaudio;
-			navigator.getUserMedia({audio: false, video: true}, function(streamvideo) {
-				$this.stream.videoStream = streamvideo;
+		if(!this.isChrome){
+			navigator.getUserMedia({audio: true, video: true}, function(streamaudiovideo) {
+				$this.stream.audioVideoStream = streamaudiovideo;
 				$this.startRecording();
 			}, function(e){
-				console.log('No video device');
-				$this.startRecording();
+				console.log('No video or audio device');
 			});
-		}, function(e){
-			console.error('No audio device');
-			$this.recordFail(e);
-		});
+		}
+		else{
+			navigator.getUserMedia({audio: true, video: false}, function(streamaudio) {
+				$this.stream.audioStream = streamaudio;
+				navigator.getUserMedia({audio: false, video: true}, function(streamvideo) {
+					$this.stream.videoStream = streamvideo;
+					$this.startRecording();
+				}, function(e){
+					console.log('No video device');
+					$this.startRecording();
+				});
+			}, function(e){
+				console.error('No audio device');
+				$this.recordFail(e);
+			});
+		}
 	},
 	/// Démarage de l'enregistrement Video et Audio
 	startRecording: function(){
 		var $this=this;
 		this.recorder = {};
-		if(typeof this.stream.audioStream != 'undefined') this.recorder.audioStreamRecorder = RecordRTC(this.stream.audioStream, {type: 'audio'});
-		if(typeof this.stream.videoStream != 'undefined') this.recorder.videoStreamRecorder = RecordRTC(this.stream.videoStream, {type: 'video'});
-		
-		if(typeof this.recorder.audioStreamRecorder != 'undefined') this.recorder.audioStreamRecorder.startRecording();
-		if(typeof this.recorder.videoStreamRecorder != 'undefined') this.recorder.videoStreamRecorder.startRecording();
+		if(!this.isChrome){
+			if(typeof this.stream.audioVideoStream != 'undefined'){
+				this.recorder.audioVideoStreamRecorder = RecordRTC(this.stream.audioVideoStream);
+				this.recorder.audioVideoStreamRecorder.startRecording();
+			}
+		}
+		else{
+			if(typeof this.stream.audioStream != 'undefined') this.recorder.audioStreamRecorder = RecordRTC(this.stream.audioStream, {type: 'audio'});
+			if(typeof this.stream.videoStream != 'undefined') this.recorder.videoStreamRecorder = RecordRTC(this.stream.videoStream, {type: 'video'});
+			
+			if(typeof this.recorder.audioStreamRecorder != 'undefined') this.recorder.audioStreamRecorder.startRecording();
+			if(typeof this.recorder.videoStreamRecorder != 'undefined') this.recorder.videoStreamRecorder.startRecording();
+		}
 		this.recordStarted();
 	},
 	/// Démarage de l'enregistrement Video et Audio
 	stopRecording: function(){
 		var $this = this;
-		if(typeof this.recorder.audioStreamRecorder != 'undefined' && typeof this.recorder.videoStreamRecorder != 'undefined'){
-			this.recorder.videoStreamRecorder.stopRecording(function () {
-				$this.recorder.audioStreamRecorder.stopRecording(function () {
-					$this.manageBlob($this.recorder.audioStreamRecorder.getBlob(), $this.recorder.videoStreamRecorder.getBlob());
-				});
-			
+		if(!this.isChrome){
+			if(typeof this.recorder.audioVideoStreamRecorder != 'undefined'){
+				this.recorder.audioVideoStreamRecorder.stopRecording(function () {
+					$this.manageBlob(null, $this.recorder.audioVideoStreamRecorder.getBlob());
 		    	});
+			}
 		}
-		else if(typeof this.recorder.audioStreamRecorder != 'undefined'){
-			$this.recorder.audioStreamRecorder.stopRecording(function () {
-				$this.manageBlob($this.recorder.audioStreamRecorder.getBlob(), null);
-			});
+		else{
+			if(typeof this.recorder.audioStreamRecorder != 'undefined' && typeof this.recorder.videoStreamRecorder != 'undefined'){
+				this.recorder.videoStreamRecorder.stopRecording(function () {
+					$this.recorder.audioStreamRecorder.stopRecording(function () {
+						$this.manageBlob($this.recorder.audioStreamRecorder.getBlob(), $this.recorder.videoStreamRecorder.getBlob());
+					});
+				
+			    	});
+			}
+			else if(typeof this.recorder.audioStreamRecorder != 'undefined'){
+				$this.recorder.audioStreamRecorder.stopRecording(function () {
+					$this.manageBlob($this.recorder.audioStreamRecorder.getBlob(), null);
+				});
+			}
 		}
 	},
 	/// Callback de fin d'enregistrement
