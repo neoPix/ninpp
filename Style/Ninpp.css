@@ -81,17 +81,58 @@ ninpp-slide{
 	top: 0;
 	left: 0;
 	overflow: hidden;
+	visibility: hidden;
 	display: block;
-	overflow: hidden;
-	transform: translate(100vw, 0);
-	transition: transform .5s ease-in-out;
+	transition: transform .5s ease-in-out, opacity .5s ease-in-out;
+	z-index: 500;
 }
 ninpp-slide.on{
-	transform: translate(0, 0);
+	z-index: 503;
+	visibility: visible;
 }
 ninpp-slide.passed{
+	z-index: 502;
+	visibility: visible;
+}
+
+ninpp-slide.sliding{
+	visibility: visible;
+	transform: translate(100vw, 0);
+}
+ninpp-slide.sliding.on{
+	transform: translate(0, 0);
+}
+ninpp-slide.sliding.passed{
 	transform: translate(-100vw, 0);
 }
+
+ninpp-slide.fade{
+	opacity: 0;
+}
+ninpp-slide.fade.on{
+	opacity: 1;
+}
+
+ninpp-slide.drop{
+	transform: scale(3);
+}
+ninpp-slide.drop.on{
+	transform: scale(1);
+}
+ninpp-slide.drop.passed{
+	transform: scale(0);
+}
+
+ninpp-slide.pop{
+	transform: scale(0);
+}
+ninpp-slide.pop.on{
+	transform: scale(1);
+}
+ninpp-slide.pop.passed{
+	transform: scale(3);
+}
+
 ninpp-slide section.content{
 	background: rgba(50,50,50,0.8);
 	margin: 1%;

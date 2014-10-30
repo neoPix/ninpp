@@ -8,7 +8,7 @@
 	  	},
 		methods: {
 			_initialize: function(){
-				var contentTab = this.getElementsByClassName('content');
+				var contentTab = this.getElementsByClassName('content'), $this = this;;
 				if(contentTab.length > 0){
 					this.content = contentTab[0];
 				}
@@ -18,6 +18,9 @@
 					this.content.innerHTML = this.innerHTML;
 					this.innerHTML = '';
 					this.appendChild(this.content);
+					Array.prototype.slice.call(this.content.getElementsByTagName('style')).forEach(function(style){
+						$this.appendChild(style);
+					});
 				}
 				this._delayedElements = Array.prototype.slice.call(this.getElementsByClassName('delayed'));
 				this._currentAnimation = 0;
