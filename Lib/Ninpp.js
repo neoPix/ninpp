@@ -318,7 +318,7 @@
 						var $this = this;
 						this.__controls = document.createElement('ninpp-player-controls');
 						this.appendChild(this.__controls); 
-						this.__controls.addEventListener('fullscreen', function(){$this.setFullScreen();});
+						this.__controls.addEventListener('fullscreen', function(){$this.toogleFullScreen();});
 						this.__controls.addEventListener('presentator', function(){$this.setPresentator();});
 						this.__controls.addEventListener('recordReady', function(event){$this._saveRecord(event);});
 						this.__controls.addEventListener('recordStarted', function(){$this._history = [{date: +new Date(), what: 'started', slide: $this.viewer.slide}];});
@@ -396,11 +396,7 @@
 					case 66:
 					case 122:
 						event.preventDefault();
-						this.setFullScreen();
-						break;
-					case 27:
-						event.preventDefault();
-						this.unSetFullScreen();
+						this.toogleFullScreen();
 						break;
 				}
 			},
@@ -450,6 +446,13 @@
 				this.viewer.removeEventListener('previous', this.__childGoPrevious);
 				this.viewer.removeEventListener('nextAnimation', this.__childGoNext);
 				this.viewer.removeEventListener('previousAnimation', this.__childGoPrevious);
+			},
+			toogleFullScreen: function(){
+				var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
+				if(fullscreenElement)
+					this.unSetFullScreen();
+				else
+					this.setFullScreen();
 			},
 			setFullScreen: function(){
 				if (this.requestFullscreen) {
