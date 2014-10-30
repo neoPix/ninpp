@@ -67,6 +67,7 @@ ninpp-viewer .globalprogression{
 	position: absolute;
 	bottom: 0;
 	border: 0;
+	z-index: 550;
 	background: rgba(128,128,128,0.4);
 }
 ninpp-viewer .globalprogression::-moz-progress-bar{
