@@ -10,6 +10,7 @@ ninpp-player ninpp-player-controls{
 	height: 128px;
 	background: rgba(128,128,128,0.4);
 	border-radius: 0 0 5px 0;
+	z-index: 600;
 }
 ninpp-player ninpp-player-controls.on{
 	transform: translate(0, 0);
