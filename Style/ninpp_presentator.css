@@ -41,6 +41,9 @@ ninpp-presentator>ul.slides>li.on{
 }
 ninpp-presentator>ul.slides>li>ninpp-slide{
 	display: block;
+	visibility: visible;
+	transform: none;
+	transition: none;
 }
 ninpp-presentator ninpp-slide{
 	transform: none;

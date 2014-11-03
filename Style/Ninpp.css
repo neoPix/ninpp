@@ -100,12 +100,14 @@ ninpp-slide.passed{
 ninpp-slide.sliding{
 	visibility: visible;
 	transform: translate(100vw, 0);
+	z-index: 504;
 }
 ninpp-slide.sliding.on{
 	transform: translate(0, 0);
 }
 ninpp-slide.sliding.passed{
 	transform: translate(-100vw, 0);
+	z-index: 504;
 }
 
 ninpp-slide.fade{
