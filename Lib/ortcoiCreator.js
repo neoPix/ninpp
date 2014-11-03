@@ -129,11 +129,24 @@ Ninpp.ortcoiCreator.prototype = {
 	},
 	_convertDone: function(done){
 		zip = new JSZip();
+		zip.file('slides.html', this._zip.file('slides.html').asText());
+		zip.file('record.json', this._zip.file('record.json').asText());
 		if(done.audio)
-			zip.file("audio.ogg", done.audio.data);
+			zip.file('audio.ogg', done.audio.data);
 		if(done.video)
 			zip.file("video.mp4", done.video.data);
-		saveAs(zip.generate({type:"blob"}), "compressed.zip");
+		var presentation = zip.generate({type:"blob"});
+		this.sendBlob(presentation);
+	},
+	sendBlob: function(blob){
+		var form = new FormData(),
+	    request = new XMLHttpRequest();
+		form.append("blob",blob);
+		request.open("POST","http://localhost:8080/Upload",true);
+		request.onreadystatechange = function() {
+			console.log(request);
+		};
+		request.send(form);
 	}
 };
 
