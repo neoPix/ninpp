@@ -1,7 +1,9 @@
 var multiparty = require('multiparty')
   , http = require('http')
   , fs = require('fs')
-  , jszip = require('jszip');
+  , jszip = require('jszip')
+  , spawn = require('child_process').spawn
+  , exec = require('child_process').exec;
 
 var Queue = function(){ this._queue = new Array(); };
 Queue.prototype = {
@@ -17,18 +19,34 @@ Queue.prototype = {
     }
 };
 
+var FFmpegEncode = function(params, done, fail){ 
+    var process = spawn('./bin/ffmpeg', params);
+
+    process.stdout.on('data', function (data) {});
+
+    process.stderr.on('data', function (data) {});
+
+    process.on('close', function (code) {
+        if(code == 0)
+           done();
+        else
+            fail();
+    });
+};
+
 var App = function(port){ 
     this._server = null;
-    this._curent = null;
+    this._current = null;
     this._queue = new Queue();
     this._done = new Array();
     this.initialize(port);
  }
 App.prototype = {
     _server: null,
-    _curent: null,
+    _current: null,
     _queue: null,
     _done: null,
+    _formats: null,
     initialize : function(port){
         port = port || 8080;
         var $this = this;
@@ -79,15 +97,16 @@ App.prototype = {
     },
     manageQueue: function(){
         var $this = this;
-        if(this._current == null && this._queue.size() > 0){
-            this._current = this._queue.dequeue();
-            this.copyFile(this._current, function(){
-                $this.openZip();
-            }, function(message){
-                $this.manageError(message);
-            });
-            
-        }
+        exec('rm ./curent.zip && rm -R ./curent', function(){
+            if($this._current == null && $this._queue.size() > 0){
+                $this._current = $this._queue.dequeue();
+                $this.copyFile($this._current, function(){
+                    $this.openZip();
+                }, function(message){
+                    $this.manageError(message);
+                });
+            }
+        });
     },
     openZip: function(){
         var $this = this;
@@ -101,14 +120,75 @@ App.prototype = {
         });
     },
     manageZip: function(zip){
-        // Convertion audio et video
-        // Génération des miniatures image
-        // Préparation du HTML
-        // Regroupement dans un fichier zip /done/{code}.zip
-        // Passage en done -> téléchargement client
-
+        var $this = this;
+        exec('mkdir -p ./done/'+$this._current.token+' && unzip curent.zip -d curent', function(error){
+            $this.convert(zip);
+        });
+    },
+    convert: function(zip){
+        var $this = this;
+        this._current.state = 'convertion';
+        if(zip.file('audio.ogg') && zip.file('video.mp4')){
+            FFmpegEncode(['-i', './curent/video.mp4', '-itsoffset', '-1.45', '-i', './curent/audio.ogg', '-c:v', 'h264', '-c:a', 'mp3', '-strict', 'experimental', './done/'+$this._current.token+'/video.mp4'], function(){
+                FFmpegEncode(['-i', './curent/video.mp4', '-itsoffset', '-1.45', '-i', './curent/audio.ogg', '-c:v', 'theora', '-c:a', 'vorbis', '-strict', 'experimental', './done/'+$this._current.token+'/video.ogg'], function(){
+                    FFmpegEncode(['-i', './curent/video.mp4', '-itsoffset', '-1.45', '-i', './curent/audio.ogg', '-c:v', 'libvpx', '-c:a', 'vorbis', '-strict', 'experimental', './done/'+$this._current.token+'/video.webm'], function(){
+                        $this.createThumbnail(zip);
+                    }, function(){
+                        $this.manageError('webm conversion error.');
+                    });
+                }, function(){
+                    $this.manageError('ogg conversion error.');
+                });
+            }, function(){
+                $this.manageError('h264 conversion error.');
+            });
+        }
+        else if(zip.file('audio.ogg')==null && zip.file('video.mp4')){
+            FFmpegEncode(['-i', './curent/video.mp4', '-c:v', 'h264', '-c:a', 'mp3', '-strict', 'experimental', './done/'+$this._current.token+'/video.mp4'], function(){
+                FFmpegEncode(['-i', './curent/video.mp4', '-c:v', 'theora', '-c:a', 'copy', '-strict', 'experimental', './done/'+$this._current.token+'/video.ogg'], function(){
+                    FFmpegEncode(['-i', './curent/video.mp4', '-c:v', 'libvpx', '-c:a', 'copy', '-strict', 'experimental', './done/'+$this._current.token+'/video.webm'], function(){
+                        $this.createThumbnail(zip);
+                    }, function(){
+                        $this.manageError('webm conversion error.');
+                    });
+                }, function(){
+                    $this.manageError('ogg conversion error.');
+                });
+            }, function(){
+                $this.manageError('h264 conversion error.');
+            });
+        }
+        else if(zip.file('audio.ogg') && zip.file('video.mp4')==null){
+            FFmpegEncode(['-i', './curent/audio.ogg', '-c:a', 'mp3', '-strict', 'experimental', './done/'+$this._current.token+'/audio.mp3'], function(){
+                FFmpegEncode(['-i', './curent/audio.ogg', '-c:a', 'vorbis', '-strict', 'experimental', './done/'+$this._current.token+'/audio.ogg'], function(){
+                    $this.createHTML(zip);
+                }, function(){
+                    $this.manageError('vorbis conversion error.');
+                });
+            }, function(){
+                $this.manageError('mp3 conversion error.');
+            });
+        }
+    },
+    createThumbnail: function(zip){
+        this._current.state = 'thumbnail';
+        var $this = this;
+        FFmpegEncode(['-i', './curent/video.mp4', '-f', 'image2', '-vf', 'fps=fps=12/60', './done/'+this._current.token+'/thumb_%03d.jpg'], function(){
+            $this.createHTML(zip);
+        }, function(){
+            $this.manageError('Thumbnails generation error.');
+        });
+    },
+    createHTML: function(zip){
+        this._current.state = 'html';
+        // génération du fichier HTML
+        // ajout des libs js
+        // ajout du css
+        // compression zip
+        this.creationDone();
+    },
+    creationDone: function(){
         this._current.state = 'done';
-        console.log(this._current);
         this._done.push(this._current);
         this._current = null;
         this.manageQueue();
