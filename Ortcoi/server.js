@@ -37,6 +37,7 @@ var FFmpegEncode = function(params, done, fail){
 var App = function(port){ 
     this._server = null;
     this._current = null;
+    this._type = null;
     this._queue = new Queue();
     this._done = new Array();
     this.initialize(port);
@@ -47,6 +48,7 @@ App.prototype = {
     _queue: null,
     _done: null,
     _formats: null,
+    _type: null,
     initialize : function(port){
         port = port || 8080;
         var $this = this;
@@ -132,6 +134,7 @@ App.prototype = {
             FFmpegEncode(['-i', './curent/video.mp4', '-itsoffset', '-1.45', '-i', './curent/audio.ogg', '-c:v', 'h264', '-c:a', 'mp3', '-strict', 'experimental', './done/'+$this._current.token+'/video.mp4'], function(){
                 FFmpegEncode(['-i', './curent/video.mp4', '-itsoffset', '-1.45', '-i', './curent/audio.ogg', '-c:v', 'theora', '-c:a', 'vorbis', '-strict', 'experimental', './done/'+$this._current.token+'/video.ogg'], function(){
                     FFmpegEncode(['-i', './curent/video.mp4', '-itsoffset', '-1.45', '-i', './curent/audio.ogg', '-c:v', 'libvpx', '-c:a', 'vorbis', '-strict', 'experimental', './done/'+$this._current.token+'/video.webm'], function(){
+                        $this._type = 'video';
                         $this.createThumbnail(zip);
                     }, function(){
                         $this.manageError('webm conversion error.');
@@ -147,6 +150,7 @@ App.prototype = {
             FFmpegEncode(['-i', './curent/video.mp4', '-c:v', 'h264', '-c:a', 'mp3', '-strict', 'experimental', './done/'+$this._current.token+'/video.mp4'], function(){
                 FFmpegEncode(['-i', './curent/video.mp4', '-c:v', 'theora', '-c:a', 'copy', '-strict', 'experimental', './done/'+$this._current.token+'/video.ogg'], function(){
                     FFmpegEncode(['-i', './curent/video.mp4', '-c:v', 'libvpx', '-c:a', 'copy', '-strict', 'experimental', './done/'+$this._current.token+'/video.webm'], function(){
+                        $this._type = 'video';
                         $this.createThumbnail(zip);
                     }, function(){
                         $this.manageError('webm conversion error.');
@@ -161,6 +165,7 @@ App.prototype = {
         else if(zip.file('audio.ogg') && zip.file('video.mp4')==null){
             FFmpegEncode(['-i', './curent/audio.ogg', '-c:a', 'mp3', '-strict', 'experimental', './done/'+$this._current.token+'/audio.mp3'], function(){
                 FFmpegEncode(['-i', './curent/audio.ogg', '-c:a', 'vorbis', '-strict', 'experimental', './done/'+$this._current.token+'/audio.ogg'], function(){
+                    $this._type = 'audio';
                     $this.createHTML(zip);
                 }, function(){
                     $this.manageError('vorbis conversion error.');
@@ -180,12 +185,40 @@ App.prototype = {
         });
     },
     createHTML: function(zip){
+        var $this = this;
         this._current.state = 'html';
-        // génération du fichier HTML
+        fs.readFile('./template.html', 'utf8', function (err,data) {
+            if (err) {
+                return $this.manageError(err);
+            }
+            data = data
+                .replace('%media%', $this.getMediaHtml())
+                .replace('%slides%', zip.file('slides.html').asText())
+                .replace('%record%', zip.file('record.json').asText());
+            fs.writeFile('./done/'+$this._current.token+'/index.html', data, function(err) {
+                if (err) {
+                    return $this.manageError(err);
+                }
+                exec('zip -r -9 ./done/'+$this._current.token+'.zip ./done/'+$this._current.token+'/', function(){
+                    exec('rm -r ./done/'+$this._current.token+'/', function(){
+                        $this.creationDone();
+                    });
+                });
+            }); 
+
+        });
         // ajout des libs js
         // ajout du css
-        // compression zip
-        this.creationDone();
+    },
+    getMediaHtml: function(){
+        switch(this._type){
+            case 'audio':
+                return '<audio preload="auto"><source src="audio.ogg" type="audio/ogg"><source src="audio.mp3" type="audio/mpeg"></audio>';
+            case 'video':
+                return '<video preload="auto"><source src="video.webm" type="video/webm"><source src="video.mp4" type="video/mp4"><source src="video.ogg" type="video/ogg"></video>';
+            default:
+                return 'unknown format';
+        }
     },
     creationDone: function(){
         this._current.state = 'done';

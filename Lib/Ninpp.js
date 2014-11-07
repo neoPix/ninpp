@@ -644,6 +644,120 @@
 			}
 		}
 	});
+	xtag.register('ninpp-media', {
+		extends: 'div',
+		lifecycle:{
+			created: function(){
+				this._init();
+			},
+			removed: function(){
+			}
+	  	},
+		methods: {
+			_init: function(){
+				this._media = this.getElementsByTagName('video');
+				if(this._media.length <= 0)
+					this._media = this.getElementsByTagName('audio');
+				if(this._media.length <= 0)
+					alert('Ni audio ni vidéo, c\'est quoi ce bordel!');
+				this._media = this._media[0];
+				this._isVideo = this._media.tagName == 'VIDEO';
+
+				this._bind();
+			},
+			_bind: function(){
+				var $this = this;
+				this._media.ontimeupdate = function(event){ $this.dispatchEvent(new CustomEvent('timeChanged', {detail: {time: $this._media.currentTime} })); };
+			},
+			play: function(){
+				this._media.play();
+			},
+			pause: function(){
+				this._media.pause();
+			},
+			setTime: function(time){
+				this._media.currentTime = time;
+			}
+		}
+	});
+	xtag.register('ninpp-replay', {
+		extends: 'div',
+		lifecycle:{
+			created: function(){
+				this._init();
+			},
+			removed: function(){
+			}
+	  	},
+		methods: {
+			_init: function(){
+				this.viewer = this.getElementsByTagName('ninpp-viewer')[0];
+				this.media = this.getElementsByTagName('ninpp-media')[0];
+
+				this.playButton = document.createElement('button');
+				this.playButton.classList.add('play');
+				this.playButton.innerHTML = '►';
+				this.appendChild(this.playButton);
+
+				this.viewer.style.width = '80vw';
+				this.viewer.setSlide(this.viewer.slide);
+				this.media.style.width = '20vw';
+				this._loadHistory();
+				this._bind();
+			},
+			_loadHistory: function(){
+				this.history = this.getElementsByClassName('ninpp-history')[0];
+				var json = JSON.parse(this.history.innerHTML);
+				this.removeChild(this.history);
+				this.history = json;
+
+				var first = this.history[0].date;
+				this.history.forEach(function(h){
+					h.date = h.date - first;
+				});
+				this._lastEventTime = 0;
+				this.viewer.setSlide(this.history[0].slide);
+			},
+			_bind: function(){
+				var $this = this;
+				this.__onTimeChanged = function(event){ $this.mediaTimeChanged(event.detail.time * 1000); };
+				this.__onplayClicked = function(event){ $this.play(); };
+				this.media.addEventListener('timeChanged', this.__onTimeChanged);
+				this.playButton.addEventListener('click', this.__onplayClicked);
+			},
+			play: function(){
+				if(!this.media._media.paused){
+					this.media.pause();
+					this.playButton.innerHTML = '►';
+				}
+				else{
+					this.media.play();
+					this.playButton.innerHTML = '‖';
+				}
+			},
+			mediaTimeChanged: function(time){
+				var $this = this;
+				this.history.forEach(function(h){
+					if(h.date < time && $this._lastEventTime < h.date){
+						$this._lastEventTime = h.date;
+						switch(h.what)
+						{
+							case 'nextslide':
+							case 'nextanimation':
+								$this.viewer.next();
+								break;
+							case 'previousslide':
+							case 'previousanimation':
+								$this.viewer.previous();
+								break;
+						}
+
+						return false;
+					}
+				});
+			}
+		}
+	});
 })();
 
 var NinppRecorder = function(){
