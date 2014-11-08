@@ -6,6 +6,7 @@ Ninpp.ortcoiCreator.prototype = {
 		this._step1 = document.getElementById('step1');
 
 		this._fileReader = document.getElementById('readFile');
+		this._compress = document.getElementById('useConpression');
 
 		this._fileReader.addEventListener('change', function(){$this._readZip($this._fileReader.files[0]);});
 	},
@@ -19,7 +20,25 @@ Ninpp.ortcoiCreator.prototype = {
 	},
 	_checkZip: function(){
 		this._step1.style.display = 'none';
-		this._compressVideoAndAudio();
+		if(this._compress.checked){
+			this._compressVideoAndAudio();
+		}
+		else{
+			var results = {}
+			if(typeof this._zip.files['record.wav'] != 'undefined'){
+				audio = this._zip.files['record.wav'].asUint8Array();
+				results.audio = { name: 'output.ogg', data:audio };
+			}
+			if(typeof this._zip.files['record.ogg'] != 'undefined'){
+				audio = this._zip.files['record.ogg'].asUint8Array();
+				results.audio = { name: 'output.ogg', data:audio };
+			}
+			if(typeof this._zip.files['record.webm'] != 'undefined'){
+				audio = this._zip.files['record.webm'].asUint8Array();
+				results.video = { name: 'output.webm', data:audio };
+			}
+			this._convertDone(results);
+		}
 	},
 	_getWorker: function(onReady, onDone){
 		var worker = new Worker('../Lib/worker.js');
@@ -79,7 +98,7 @@ Ninpp.ortcoiCreator.prototype = {
 		var args = [
 			'-i', 'video.webm',
 			'-c:v', 'mpeg4',
-			'-b:v', '350k'
+			'-b:v', '600k'
 		];
 		if(withAudio){
 			args.push('-c:a');
