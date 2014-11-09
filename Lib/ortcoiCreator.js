@@ -4,6 +4,7 @@ Ninpp.ortcoiCreator.prototype = {
 	_init: function(){
 		var $this = this;
 		this._step1 = document.getElementById('step1');
+		this._step2 = document.getElementById('step2');
 
 		this._fileReader = document.getElementById('readFile');
 		this._compress = document.getElementById('useConpression');
@@ -158,14 +159,42 @@ Ninpp.ortcoiCreator.prototype = {
 		this.sendBlob(presentation);
 	},
 	sendBlob: function(blob){
-		var form = new FormData(),
+		var $this = this,
+		form = new FormData(),
 	    request = new XMLHttpRequest();
 		form.append("blob",blob);
 		request.open("POST","http://localhost:8080/Upload",true);
 		request.onreadystatechange = function() {
-			console.log(request);
+			if(request.readyState == 4 && request.status == 200){
+				$this.uploadDone(JSON.parse(request.responseText));
+			}
 		};
 		request.send(form);
+	},
+	uploadDone: function(status){
+		var $this = this;
+		this._step2.style.display='inherit';
+		this.currentState = status;
+		this.interval = window.setInterval(function(){
+			var request = new XMLHttpRequest();
+			request.open("GET","http://localhost:8080/GetStatus?token="+$this.currentState.token,true);
+			request.onreadystatechange = function() {
+				if(request.readyState == 4 && request.status == 200){
+					$this.updateState(JSON.parse(request.responseText));
+				}
+			};
+			request.send();
+		}, 500);
+	},
+	updateState: function(status){
+		if(status.state == 'done'){
+			window.clearInterval(this.interval);
+			this._step2.innerHTML = status.state;
+			document.location.replace('http://localhost:8080/GetFile?token='+this.currentState.token);
+		}
+		else{
+			this._step2.innerHTML = status.state;
+		}
 	}
 };
 

@@ -3,7 +3,8 @@ var multiparty = require('multiparty')
   , fs = require('fs')
   , jszip = require('jszip')
   , spawn = require('child_process').spawn
-  , exec = require('child_process').exec;
+  , exec = require('child_process').exec
+  , url = require('url');
 
 var Queue = function(){ this._queue = new Array(); };
 Queue.prototype = {
@@ -57,12 +58,17 @@ App.prototype = {
                 response.send(200);
                 return;
             }
-            switch(request.url){
+            request.query = url.parse(request.url, true);
+
+            switch(request.query.pathname){
                 case '/Upload' :
                     $this.manageUpload(request, response);
                     break;
                 case '/GetStatus' :
                     $this.manageStatus(request, response);
+                    break;
+                case '/GetFile' :
+                    $this.download(request, response);
                     break;
             }
         }).listen(port);
@@ -72,8 +78,34 @@ App.prototype = {
     getToken: function(){
         return parseInt(Math.random() * 1000000000).toString(32);
     },
-    manageStatus: function(request, response){
+    download: function(request, response){
+        var file = fs.readFileSync('./done/'+request.query.query.token+'.zip', 'binary');
+
+        response.setHeader('Content-Length', file.length);
+        response.setHeader('Content-disposition', 'attachment; filename=presentation.zip');
+        response.setHeader('Content-type', 'application/zip');
+        response.write(file, 'binary');
         response.end();
+    },
+    manageStatus: function(request, response){
+        var token = request.query.query.token, result = JSON.stringify({token : null, state: null, position: 0}, null, 3);
+        response.setHeader('Content-Type', 'application/json');
+        if(token){
+            if(this._current && this._current.token == token){
+                result = JSON.stringify({token : this._current.token, state: this._current.state, position: 0}, null, 3);
+            }
+            this._done.filter(function(e){ 
+                return e.token == token; 
+            }).forEach(function(e, i){
+                result = JSON.stringify({token : e.token, state: e.state, position: 0}, null, 3);
+            });
+            this._queue._queue.filter(function(e){ 
+                return e.token == token; 
+            }).forEach(function(e, i){
+                result = JSON.stringify({token : e.token, state: e.state, position: i + 1}, null, 3);
+            });
+        }
+        response.end(result);
     },
     manageUpload: function(request, response){
         var $this = this, form = new multiparty.Form({autoFiles: true}), files = [];
