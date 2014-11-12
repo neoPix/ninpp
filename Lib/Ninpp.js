@@ -701,7 +701,7 @@
 
 				this.viewer.style.width = '80vw';
 				this.viewer.setSlide(this.viewer.slide);
-				this.media.style.width = '20vw';
+				this.media.style.width = '19.5vw';
 				this._loadHistory();
 				this._bind();
 			},
@@ -722,8 +722,12 @@
 				var $this = this;
 				this.__onTimeChanged = function(event){ $this.mediaTimeChanged(event.detail.time * 1000); };
 				this.__onplayClicked = function(event){ $this.play(); };
+				this.__onVideoClicked = function(){ $this.showVideo(); };
+				this.__onSlideClicked = function(){ $this.showSlide(); };
 				this.media.addEventListener('timeChanged', this.__onTimeChanged);
 				this.playButton.addEventListener('click', this.__onplayClicked);
+				this.media.addEventListener('click', this.__onVideoClicked);
+				this.viewer.addEventListener('click', this.__onSlideClicked);
 			},
 			play: function(){
 				if(!this.media._media.paused){
@@ -734,6 +738,16 @@
 					this.media.play();
 					this.playButton.innerHTML = '‖';
 				}
+			},
+			showVideo: function(){
+				this.media.style.width = '34.5vw';
+				this.viewer.style.width = '65vw';
+				this.viewer._slides[this.viewer.slide].update(this.viewer);
+			},
+			showSlide: function(){
+				this.media.style.width = '19.5vw';
+				this.viewer.style.width = '80vw';
+				this.viewer._slides[this.viewer.slide].update(this.viewer);
 			},
 			mediaTimeChanged: function(time){
 				var $this = this;
