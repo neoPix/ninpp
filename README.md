@@ -41,10 +41,6 @@ Server side :
 
 ##Todo
 
-* Creating a better interface for the video treatment client part (**Ortcoi**).
-* Refactoriring the **Ortcoi** server code  for executing the process without creating an http server.
-* Propose an online service for presentation preparation.
-* Create a **Ortcoi** installation and utilisation documentation.
 * Create an **Ninpp** utilisation tutorial on how to make a presentation.
 * Create the **Artki** platform allowing to create presentations in the browser.
 
