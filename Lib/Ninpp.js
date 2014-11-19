@@ -667,7 +667,7 @@
 			},
 			_bind: function(){
 				var $this = this;
-				this._media.ontimeupdate = function(event){ $this.dispatchEvent(new CustomEvent('timeChanged', {detail: {time: $this._media.currentTime} })); };
+				this._media.ontimeupdate = function(event){ $this.dispatchEvent(new CustomEvent('timeChanged', {detail: {time: $this._media.currentTime, duration : $this._media.duration} })); };
 			},
 			play: function(){
 				this._media.play();
@@ -677,6 +677,9 @@
 			},
 			setTime: function(time){
 				this._media.currentTime = time;
+			},
+			setProgress: function(progress){
+				this.setTime(progress * this._media.duration);
 			}
 		}
 	});
@@ -699,6 +702,11 @@
 				this.playButton.innerHTML = '►';
 				this.appendChild(this.playButton);
 
+				this.progress = document.createElement('progress');
+				this.progress.value = 0;
+				this.progress.classList.add('globalProgress');
+				this.appendChild(this.progress);
+
 				this.viewer.style.width = '80vw';
 				this.viewer.setSlide(this.viewer.slide);
 				this.media.style.width = '19.5vw';
@@ -712,22 +720,25 @@
 				this.history = json;
 
 				var first = this.history[0].date;
-				this.history.forEach(function(h){
+				this.history.forEach(function(h, i){
 					h.date = h.date - first;
+					h.position = i;
 				});
 				this._lastEventTime = 0;
 				this.viewer.setSlide(this.history[0].slide);
 			},
 			_bind: function(){
 				var $this = this;
-				this.__onTimeChanged = function(event){ $this.mediaTimeChanged(event.detail.time * 1000); };
+				this.__onTimeChanged = function(event){ $this.mediaTimeChanged(event.detail.time * 1000, event.detail.duration * 1000); };
 				this.__onplayClicked = function(event){ $this.play(); };
 				this.__onVideoClicked = function(){ $this.showVideo(); };
 				this.__onSlideClicked = function(){ $this.showSlide(); };
+				this.__onProgressChanged = function(event){ $this.media.setProgress(event.clientX / $this.progress.offsetWidth); };
 				this.media.addEventListener('timeChanged', this.__onTimeChanged);
 				this.playButton.addEventListener('click', this.__onplayClicked);
 				this.media.addEventListener('click', this.__onVideoClicked);
 				this.viewer.addEventListener('click', this.__onSlideClicked);
+				this.progress.addEventListener('click', this.__onProgressChanged);
 			},
 			play: function(){
 				if(!this.media._media.paused){
@@ -749,26 +760,54 @@
 				this.viewer.style.width = '80vw';
 				this.viewer._slides[this.viewer.slide].update(this.viewer);
 			},
-			mediaTimeChanged: function(time){
+			mediaTimeChanged: function(time, duration){
 				var $this = this;
-				this.history.forEach(function(h){
-					if(h.date < time && $this._lastEventTime < h.date){
-						$this._lastEventTime = h.date;
-						switch(h.what)
-						{
-							case 'nextslide':
-							case 'nextanimation':
-								$this.viewer.next();
-								break;
-							case 'previousslide':
-							case 'previousanimation':
-								$this.viewer.previous();
-								break;
-						}
+				this.progress.value = time / duration;
 
-						return false;
+				var changed = this.history.filter(function(h){ return h.date >= Math.min(time, $this._lastEventTime) && h.date <= Math.max(time, $this._lastEventTime) });
+
+				if(changed && changed.length > 0){
+					if($this._lastEventTime < time){
+						changed.forEach(function(h){
+							if(h.date < time && $this._lastEventTime < h.date){
+								$this._lastEventTime = h.date;
+								switch(h.what)
+								{
+									case 'nextslide':
+									case 'nextanimation':
+										$this.viewer.next();
+										break;
+									case 'previousslide':
+									case 'previousanimation':
+										$this.viewer.previous();
+										break;
+								}
+							}
+						});
 					}
-				});
+					else{
+						var last = changed[0].position;
+						changed.reverse();
+						if(last > 1) changed.push(this.history[last - 1]);
+						changed.forEach(function(h){
+							if(h.date >= time && $this._lastEventTime >= h.date){
+								$this._lastEventTime = h.date;
+								switch(h.what)
+								{
+									case 'nextslide':
+									case 'nextanimation':
+										$this.viewer.previous();
+										break;
+									case 'previousslide':
+									case 'previousanimation':
+										$this.viewer.next();
+										break;
+								}
+							}
+						});
+						$this._lastEventTime = time;
+					}
+				}
 			}
 		}
 	});

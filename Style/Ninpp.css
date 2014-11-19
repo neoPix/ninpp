@@ -301,3 +301,22 @@ ninpp-replay ninpp-media{
 ninpp-replay ninpp-media video{
 	width: 100%;
 }
+ninpp-replay .globalProgress{
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 1vh;
+	z-index: 800;
+	background: rgba(128,128,128,0.25);
+	border: none;
+}
+ninpp-replay .globalProgress::-moz-progress-bar{
+	background: rgba(0,0,128,0.25);
+}
+ninpp-replay .globalProgress:hover{
+	height: 3vh;
+	cursor: pointer;
+}
+ninpp-replay .globalProgress:hover::-moz-progress-bar{
+	background: rgba(0,0,128,0.6);
+}
