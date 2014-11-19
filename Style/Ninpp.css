@@ -262,22 +262,41 @@ ninpp-replay{
 	background: #2b2b2b;
 	position: relative;
 }
-ninpp-replay .play{
+ninpp-replay .button{
 	display: block;
 	position: absolute;
-	bottom: 10px;
+	background: #0745A8;
+	font-size: 2.8vw;
+	border: none;
+	color: #FFF;
+}
+ninpp-replay .button.play{
+	bottom: 1.5vw;
 	right: 7.5vw;
 	height: 5vw;
 	width: 5vw;
 	border-radius: 50%;
-	border: none;
-	background: #0745A8;
-	font-size: 2.8vw;
-	color: #FFF;
+}
+ninpp-replay .button.next, ninpp-replay .button.previous{
+	bottom: 2.5vw;
+	width: 5vw;
+	background: #4367A1;
+	height: 3vw;
+	font-size: 1.2vw;
+}
+ninpp-replay .button.next{
+	right: 5vw;
+	padding-left: 3vw;
+	border-radius: 0 25% 25% 0;
+}
+ninpp-replay .button.previous{
+	right: 10vw;
+	padding-right: 3vw;
+	border-radius: 25% 0 0 25%;
 }
 ninpp-replay .info{
 	position: absolute;
-	bottom: 8vw;
+	bottom: 8.5vw;
 	right: 0;
 	width: 20vw;
 	color: #fff;

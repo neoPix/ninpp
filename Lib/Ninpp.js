@@ -697,8 +697,21 @@
 				this.viewer = this.getElementsByTagName('ninpp-viewer')[0];
 				this.media = this.getElementsByTagName('ninpp-media')[0];
 
+				this.previousButton = document.createElement('button');
+				this.previousButton.classList.add('previous');
+				this.previousButton.classList.add('button');
+				this.previousButton.innerHTML = '◂◂';
+				this.appendChild(this.previousButton);
+
+				this.nextButton = document.createElement('button');
+				this.nextButton.classList.add('next');
+				this.nextButton.classList.add('button');
+				this.nextButton.innerHTML = '▸▸';
+				this.appendChild(this.nextButton);
+
 				this.playButton = document.createElement('button');
 				this.playButton.classList.add('play');
+				this.playButton.classList.add('button');
 				this.playButton.innerHTML = '►';
 				this.appendChild(this.playButton);
 
@@ -734,7 +747,11 @@
 				this.__onVideoClicked = function(){ $this.showVideo(); };
 				this.__onSlideClicked = function(){ $this.showSlide(); };
 				this.__onProgressChanged = function(event){ $this.media.setProgress(event.clientX / $this.progress.offsetWidth); };
+				this.__goNextSlide = function(){ $this.goNext(); };
+				this.__goPreviousSlide = function(){ $this.goPrevious(); };
 				this.media.addEventListener('timeChanged', this.__onTimeChanged);
+				this.previousButton.addEventListener('click', this.__goPreviousSlide);
+				this.nextButton.addEventListener('click', this.__goNextSlide);
 				this.playButton.addEventListener('click', this.__onplayClicked);
 				this.media.addEventListener('click', this.__onVideoClicked);
 				this.viewer.addEventListener('click', this.__onSlideClicked);
@@ -759,6 +776,32 @@
 				this.media.style.width = '19.5vw';
 				this.viewer.style.width = '80vw';
 				this.viewer._slides[this.viewer.slide].update(this.viewer);
+			},
+			goNext: function(){
+				var $this = this;
+				this.history.every(function(h){
+					if($this._lastEventTime < h.date){
+						if(h.what == 'nextslide'){
+							$this.media.setTime((h.date + 1) / 1000);
+							return false;
+						}
+					}
+					return true;
+				});
+			},
+			goPrevious: function(){
+				var $this = this;
+				this.history.reverse();
+				this.history.every(function(h){
+					if($this._lastEventTime - 1 > h.date){
+						if(h.what == 'nextslide' || h.what == 'started'){
+							$this.media.setTime((h.date + 1) / 1000);
+							return false;
+						}
+					}
+					return true;
+				});
+				this.history.reverse();
 			},
 			mediaTimeChanged: function(time, duration){
 				var $this = this;
